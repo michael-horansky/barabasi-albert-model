@@ -296,108 +296,6 @@ def expected_max_k(m, N, k_max = 1000000):
         res_sum += k * p_k
     print("Analysis done.                                                     ") #this is SUCH an ugly solution.
     return(res_sum)
-    
-
-def task1_3_old(m_space = [1, 3, 5], N_max = 1e4):
-    res_array = m_scaling_test(m_space, BA_network.get_degree_distribution, 1, 'PA', N_max)
-    
-    x_list = []
-    y_PDF_list = []
-    y_counts_list = []
-    binedges_list = []
-    theoretical_binned_distribution_list = []
-    theoretical_binned_frequency_list = []
-    
-    for m_i in range(len(m_space)):
-        print(f"Statistical analysis of m = {m_space[m_i]}")
-        x, y_PDF, y_counts, binedges = logbin(res_array[m_i], scale = 1.5, x_min = m_space[m_i])
-        
-        print("  Number of bins =", len(x))
-        
-        # y * (binedges[1:] - binedges[:-1]) sums up to 1 -> this is a good categorical PDF
-        # USE BINEDGES, NOT X
-        
-        
-        sum_y = 0
-        for i in range(len(binedges)-1):
-            sum_y += y_PDF[i] * (binedges[i+1] - binedges[i])
-        print("  int(y_PDF) dk =", sum_y)
-        sum_y = 0
-        for i in range(len(binedges)-1):
-            sum_y += y_counts[i]
-        print("  sum(y_counts) over all bins (NOT values of k) =", sum_y)
-        
-        
-        
-        
-        # Pearson's chi-squared test
-        theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_gamma_p_infty(binedges, m_space[m_i])
-        print("  Sum of theoretical binned frequency counts =", sum(theoretical_binned_frequency))
-        
-        
-        # theoretical distribution is normalized on m <= k <= infty, but in the measurement we have the N_max limitation, which
-        # omits these high values. Hence we will add one more bin to our counts (theoretical and measured), which has borders at
-        # binedges[-1] and infinity. For the measuremement, its population is zero, for theory, its population is calculated.
-        
-        theoretical_binned_frequency_with_infinity = np.concatenate((theoretical_binned_frequency, [expected_bin_frequency_p_infty(m_space[m_i], max(binedges))]))
-        y_counts_with_infinity = np.concatenate((y_counts, [0.0]))
-        
-        print("  sum(y_counts) over all bins INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
-        
-        # BUT pearson is invalid for bins with counts smaller than 5, so we cannot include the infinity bin
-        
-        # chi-squared is run on counts, not frequencies -> we multiply both arrays by the total number of events = N_max
-        
-        chisq, p_val = sp.stats.chisquare(y_counts_with_infinity * N_max, theoretical_binned_frequency_with_infinity * N_max) # this automatically sets df = len(list) - 1
-        # p_val is the probability of obtaining a chi^2 exceeding the one obtained with H_0 being true.
-        # it is effectively the probability that H_0 is true, given our measurement.
-        print(f"  Pearson's chi-squared goodness-of-fit test for m = {m_space[m_i]} concluded with chi-squared = {chisq}, p = {p_val}")
-        print(f"  Therefore the measured node degree distribution doesn't contradict the theoretical prediction with the probability P = {p_val}")
-        
-        # save your stuff for plotting
-        x_list.append(x)
-        y_PDF_list.append(y_PDF)
-        y_counts_list.append(y_counts)
-        binedges_list.append(binedges)
-        theoretical_binned_distribution_list.append(theoretical_binned_distribution)
-        theoretical_binned_frequency_list.append(theoretical_binned_frequency)
-    
-    plt.subplot(2, 1, 1)
-    plt.title("PDF of node degree")
-    
-    for m_i in range(len(m_space)):
-        x_nonzero = x_list[m_i][y_PDF_list[m_i]!=0]
-        y_nonzero = y_PDF_list[m_i][y_PDF_list[m_i]!=0]
-        
-        xerr_left = x_list[m_i] - binedges_list[m_i][:-1]
-        xerr_right = binedges_list[m_i][1:] - x_list[m_i]
-        
-        xerr_left_nonzero = xerr_left[y_PDF_list[m_i]!=0]
-        xerr_right_nonzero = xerr_right[y_PDF_list[m_i]!=0]
-        
-        plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10)
-        plt.loglog(x_list[m_i], theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
-    
-    plt.legend()
-    plt.subplot(2, 1, 2)
-    plt.title("Bin frequency of node degree")
-    
-    for m_i in range(len(m_space)):
-        x_nonzero = x_list[m_i][y_PDF_list[m_i]!=0]
-        y_nonzero = y_counts_list[m_i][y_PDF_list[m_i]!=0]
-        
-        xerr_left = x_list[m_i] - binedges_list[m_i][:-1]
-        xerr_right = binedges_list[m_i][1:] - x_list[m_i]
-        
-        xerr_left_nonzero = xerr_left[y_PDF_list[m_i]!=0]
-        xerr_right_nonzero = xerr_right[y_PDF_list[m_i]!=0]
-        
-        plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10)
-        plt.loglog(x_list[m_i], theoretical_binned_frequency_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
-    
-    plt.legend()
-    plt.tight_layout()
-    plt.show()
 
 def task1_3(new_dataset_name, m_space = [1, 3, 5], N_max = [5e4, 1e5, 2e5], N_m = 1):
     
@@ -596,8 +494,8 @@ def task1_4(m_val = 3):
     plt.legend()
     plt.show()
 
-#task1_3_load('1_3_5_big')
-task1_4_expected_k_max()
+task1_3_load('1_3_5_big')
+#task1_4_expected_k_max()
 
 """
 test = BA_network(m = 3, probability_strategy = 'PA')
