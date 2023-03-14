@@ -1,0 +1,412 @@
+% ProjectTemplate.tex LaTeX template for Complexity and Networks projects
+% T.S.Evans, K. Christensen Imperial College, London
+
+\documentclass[a4paper,12pt]{article}
+
+% These packages are standard and very useful for many mathematical symbols but you may well not need them
+%\usepackage{amsmath,amssymb,amscd}
+
+% *** FIGURES
+% Info on figures at http://en.wikibooks.org/wiki/LaTeX/Floats,_Figures_and_Captions
+%
+% --- graphicx
+\usepackage{graphicx}
+% This is the main one used to read in images.  ESSENTIAL
+%
+% I DO NOT recommend you try anything else.  Messing around with inages in LaTeX is a pain.
+% Try making an image or figure 5\% smaller in LaTeX can make all the difference
+
+
+
+% for sub figures
+\usepackage{caption}
+\usepackage{subcaption}
+
+
+
+% Change Page Size
+\usepackage[a4paper,margin=2.5cm, marginparwidth=2.5cm]{geometry}
+
+
+
+% *** HYPERLINKS
+%
+%\usepackage{hyperref}
+%
+% See http://en.wikibooks.org/wiki/LaTeX/Hyperlinks
+% or hyperref manual.  Main LaTeX reference systems automatically made into hyperlinks in pdf document.
+% Again this should always be the last package to be defined which may cause issues with showkeys.
+% An out-of-memory error might be caused by this package if its in the wrong position.
+% For additional hypelinks in the text try
+%   \hyperref[mainlemma]{lemma \ref*{mainlemma}}
+%   \url{<my_url>}
+%   \href{<my_url>}{<description>}
+% Now define replacements which will work even if hyperref not included
+\providecommand{\href}[2]{\texttt{#2}}
+\providecommand{\url}[1]{\texttt{#1}}
+
+
+% *** KEYS SHOWN IN DRAFTS
+%
+%\usepackage{showkeys}
+%
+% This is great for drafts as it will show all the labels you have defined.
+% DON'T forget to comment it out before submission
+% Always the last package to define.
+% An out-of-memory error might be caused by this package if its in the wrong position.
+
+% Shorthand for list environments
+\providecommand{\bi}{\begin{itemize}}
+\providecommand{\ei}{\end{itemize}}
+\providecommand{\bd}{\begin{description}}
+\providecommand{\ed}{\end{description}}
+\providecommand{\ben}{\begin{enumerate}}
+\providecommand{\een}{\end{enumerate}}
+
+% Add up marks, not needed for actual reports, just for this template
+\newcounter{nmarks}
+\newcommand{\qmarks}[1]{\addtocounter{nmarks}{#1} }
+\newcommand{\totalmarks}{}
+% *** You do NOT want marks in your report so comment out the next two lines. ***
+\renewcommand{\qmarks}[1]{\addtocounter{nmarks}{#1} \hspace*{\fill} [\textbf{#1~marks}]}
+\renewcommand{\totalmarks}{\hspace*{\fill} [\textbf{Total~\arabic{nmarks}~marks}]}
+
+
+
+% Optional, example given here for simple headers
+%\pagestyle{myheadings}
+%\markboth{CID: \texttt{012345678} Network Project}{CID: \texttt{012345678} Network Project}
+
+
+\begin{document}
+
+% Maybe it is just as easy to lay the title page out yourself.
+% The following lines are one way to do this.
+% Otherwise try \maketitle and look up associated commands for that
+
+\begin{center}
+ {\Large\textbf{Network Project}}  \\[3pt]
+ {\Large\textbf{A Growing Network Model}} \\[6pt]
+ % NO NAME for anonymous marking
+ {\large CID: \texttt{01881584}} \\[3pt]
+ 17th February 2023 % Use \today or put your own date in here
+\end{center}
+
+
+% Abstract carries no specific marks but could be assessed as part of the overall "Professional Skills" marks
+\vspace*{2cm}
+\noindent
+\textbf{Abstract}: You may want to write a concise abstract that briefly puts the
+work into context, explains what was done, how it was done, the main results,
+the conclusions you could draw and the implications.
+
+% The Word count is part of the brief.  They carry no specific marks but could be assessed as part of the overall "Professional Skills" marks
+% Excludes front page with any abstract, figure captions, table captions, acknowledgement and bibliography.
+% You could use delatex to help you remove latex commands but a simple estimate
+% (count words per line on several lines, count lines on every page) will do.
+\vspace*{0.5cm}
+\noindent
+\textbf{Word Count}: \texttt{????} words excluding font page, figure captions, table captions, acknowledgement and bibliography.
+
+
+% *********************************************************
+%
+% Everything from here to the \newpage is for your information.
+% Delete this from your finished report
+% You could always put a nice picture here instead.
+%
+
+%
+%
+% *********************************************************
+
+
+
+
+
+
+
+% ********************************************************
+\setcounter{section}{-1}
+\section{Introduction}\label{sintro}
+
+Brief paragraph with your Aims and Objectives. Marked under the ``Professional Skills'' category.
+
+% ..............................................
+\subsection*{Definition}
+
+Give your definition of the BA model as implemented by you in this work. \qmarks{3} TOTOTO
+
+
+% ********************************************************
+\section{Phase 1: Pure Preferential Attachment $\Pi_\mathrm{pa}$}
+
+% ---------------------------------------------
+\subsection{Implementation}
+
+
+
+% ..............................................
+\subsubsection{Numerical Implementation}
+Describe how you implemented the BA model numerically. \qmarks{3} %(2010 3 marks?)
+
+
+% ..............................................
+\subsubsection{Initial Graph}
+What type of initial graph do you use and why? \qmarks{3} %(2010 3 marks?)
+
+% ..............................................
+\subsubsection{Type of Graph}
+What type of graph do you produce and why? \qmarks{3}
+
+% ..............................................
+\subsubsection{Working Code}
+How do you know that your programme is working correctly? \qmarks{2}
+
+
+% ..............................................
+\subsubsection{Parameters}
+Describe the parameters your programme needs, the values you chose, and why. \qmarks{2}
+
+
+
+% ---------------------------------------------
+\subsection{Preferential Attachment Degree Distribution Theory}
+
+% ..............................................
+\subsubsection{Theoretical Derivation}
+Give your best theoretical derivation for the form of the degree distribution $p(k)$ in the long-time limit for Preferential Attachment (PA) in the BA model. \qmarks{4}
+
+% ..............................................
+\subsubsection{Theoretical Checks}
+Check your approximate theoretical solution for $p(k)$ has the correct properties. \qmarks{4}
+
+
+
+
+% ---------------------------------------------
+\subsection{Preferential Attachment Degree Distribution Numerics}
+
+% ..............................................
+\subsubsection{Fat-Tail}
+How did you deal with any problems that a fat-tailed distribution causes? \qmarks{4}
+
+% ..............................................
+\subsubsection{Numerical Results}
+Show how you compared your theoretical result to your numerical data for fixed $N$ but different $m$.
+Give a visualisation which shows you whether you have a good or bad fit of your numerical data to your theoretical results.
+\qmarks{4}
+
+% ..............................................
+\subsubsection{Statistics}
+Show statistically whether your numerical data fits your theoretical predictions. \qmarks{6}
+
+
+% ---------------------------------------------
+\subsection{Preferential Attachment Largest Degree and Data Collapse}
+
+
+% ..............................................
+\subsubsection{Largest Degree Theory}
+Give your best theoretical estimate of how the largest expected degree, $k_\mathrm{1}$ (subscript 1 indicating the degree of the vertex ranked first by degree size) depends on the number of vertices $N$ in a finite size system and on $m$ the number of edges added each step. \qmarks{4}
+
+% ..............................................
+\subsubsection{Numerical Results for Largest Degree}
+Study of the behaviour of $k_1$ as $N$ is varied for one sensible fixed value of $m$ (justify your choice of parameters). Estimate uncertainties/errors where possible. Compare against your theoretical prediction. \qmarks{4}
+
+% ..............................................
+\subsubsection{Data Collapse}
+Illustrate the finite size effects by studying a single value of $m$ (justify your choice for $m$) but varying $N$ and looking for data collapse. You should describe how you tried to use an understanding of the $k_1$ scale to look for any finite size effects in the tail of the distribution, describing any results found. Further mathematical investigation of finite size effects is not required as it is extremely hard to do. \qmarks{4}
+
+
+
+
+% ***********************************************************************
+\section{Phase 2: Pure Random Attachment $\Pi_\mathrm{rnd}$}
+
+%%%\textbf{FOR 2023, MAKE PROMPTS/MARK SCHEME CLEARER THAT WE WANT EVERY TASK IN PHASE 1 REPEATED}
+
+
+% ---------------------------------------------
+\subsection{Random Attachment Theoretical Derivations}
+
+
+% ..............................................
+\subsubsection{Degree Distribution Theory}
+Give your best theoretical derivation for the form of the degree distribution in the long-time limit. Check your approximate theoretical solution has the correct properties. \qmarks{4}
+
+% ..............................................
+\subsubsection{Largest Degree Theory}
+Give your best theoretical estimate of how the largest expected degree, $k_\mathrm{1}$ 
+%(subscript 1 indicating the degree of the vertex ranked first by degree size) 
+depends on the number of vertices $N$ in a finite size system. \qmarks{2}
+
+% ---------------------------------------------
+\subsection{Random Attachment Numerical Results}
+
+% ..............................................
+\subsubsection{Degree Distribution Numerical Results}
+Show how you compared your theoretical result to your numerical data for different $m$ at one large value of $N$.  Is your theory a good fit to your data? How did you arrive at your conclusion?  \qmarks{6}
+
+% ..............................................
+\subsubsection{Largest Degree Numerical Results}
+Study of the behaviour of $k_1$ as $N$ is varied for one sensible fixed value of $m$ (justify your choice of parameters) including estimates of uncertainties on any measurements. Compare against your theoretical prediction. Illustrate the finite size effects by looking for possible data collapse.
+\qmarks{4}
+
+
+
+
+%%%% ****************************************************************
+%%%\section{Phase 3: Mixed Preferential and Random Attachment}
+%%%
+%%%% ---------------------------------------------
+%%%\subsection{Mixed Attachment Model Theoretical Derivations}
+%%%
+%%%Give your best theoretical derivation for the form of the degree distribution in the long-time limit for the specific scenario given, namely where some edges added with preferential attachment and some use random attachment. Check your solution. \qmarks{6}
+%%%
+%%%% ---------------------------------------------
+%%%\subsection{Mixed Attachment Model Numerical Results}
+%%%
+%%%Explain how you compared your theoretical result to your data.  Is it a good fit and how did you arrive at your conclusion about the fit? \qmarks{6}
+
+
+
+
+
+%%%% .................................................................
+%%%\section{Phase 3: Random Walks and Preferential Attachment}\label{s:phase3}
+%%%
+%%%% ..............................................
+%%%\subsection{Implementation}
+%%%
+%%%Define the model you implemented, how it was implemented and explain any choices you made. \qmarks{4}
+%%%% ..............................................
+%%%\subsection{Numerical results}
+%%%
+%%%Describe your observations of the degree distribution as best you can e.g.\ visual illustrations, quantitative information. \qmarks{6}
+%%%
+%%%% ..............................................
+%%%\subsection{Discussion of Results}
+%%%
+%%%Interpret your results in terms of the mechanisms behind the emergence of large tailed degree distributions in real world networks. \qmarks{2}
+
+
+
+% ****************************************************************
+\section{Phase 3: Existing Vertices Model}
+
+%\textbf{FOR 2022, MAKE PROMPTS/MARK SCHEME CLEARER IF WE WANT EVERY TASK IN PHASE 1 REPEATED}
+
+
+% ---------------------------------------------
+\subsection{Existing Vertices Model Theoretical Derivations}
+
+Give your best theoretical derivation for the form of the degree distribution in the long-time limit for the specific scenario given, namely where some edges added run between exiting vertices while the rest are between the new vertex and one existing vertex as before. Check your solution. \qmarks{8}
+
+% ---------------------------------------------
+\subsection{Existing Vertices Model Numerical Results}
+
+Show how you compared your theoretical result to your numerical data for different $m$ at one large value of $N$.  Is your theory a good fit to your data? How did you arrive at your conclusion?  
+Analyse the finite size effects by looking for possible data collapse. 
+\qmarks{8}
+
+% ********************************************************
+\section{Conclusions}\label{sconcl}
+
+Just one or two sentences to round off the report. Marked under the ``Professional Skills'' category.
+
+
+
+% *********************************************************
+%
+% Delete this fbox from your finished report
+%
+
+\vspace*{1cm}
+\fbox{
+  \parbox{0.9\textwidth}{
+    \emph{Delete text in this box from your final version.}
+
+    \vspace*{12pt}
+    \noindent
+    \textbf{Note}: \emph{The Acknowledgement and Bibliography do not count towards the 2500 word limit nor the 16 page limit. An acknowledgement section is not required. For a report of this type and size, references may well not be needed but if you do reference other work, such as a useful book \cite{KN05} or a useful result \cite{E23},  a formal bibliography is one way to do this. No formal marks for either of these sections but they could be considered as part of the overall Organisation, Presentation or English marks.}
+    \vspace*{12pt}
+  } % end of parbox
+} % end of fbox
+
+%
+%
+% *********************************************************
+
+
+% ********************************************************************
+%\newpage
+
+
+\section*{Acknowledgements}
+
+Optional. Not required but you might want to thank A.Demonstrator or A.Friend for help.
+
+
+% *****************************************************************
+%
+% BIBLIOGRAPHY
+%
+% **************************************************************
+% 1) DO NOT WASTE TIME WITH BibTeX unless you REALLY KNOW WHAT YOU ARE DOING.
+%    Just write it by hand.
+% 2) NO bibliography is really needed for the projects
+%    but you might cite something you read or which provided an image.
+% 3) If we can get the item from the information you provided then it is fine.
+%    The exact format is not important, but a consistent format is important.
+%    Copy the style form one publication.
+%    If space not an issue, titles of papers are useful.
+
+\begin{thebibliography}{99}
+\bibitem{KN05}
+  K.Christensen and N.Maloney,
+  \emph{Complexity and Criticality},
+  Imperial College Press, London, 2005.
+\bibitem{E23} 
+T.S.\ Evans, \emph{Astounding Paper}, Journal of Amazing Results, \textbf{9} (2023) 3134.
+\end{thebibliography}
+
+
+% *********************************************************
+%
+% Everything from here to the \newpage is for your information.
+% Delete this from your finished report
+%
+\vspace*{2cm}
+
+\fbox{
+  \parbox{0.9\textwidth}{
+    \emph{Delete text in this box from your final version.}
+
+    \vspace*{12pt}
+    \noindent
+    \textbf{Professional Skills}
+
+    \emph{Do not include this section in your report, it is for your information only}
+
+    Your report should be
+    \bi
+    \item written in clear comprehensible English \qmarks{6}
+    \item be well presented \qmarks{6}
+    \item well organised and follows brief \qmarks{6}
+    \ei
+    This is highly subjective but generally most reports score well on these aspects. Many of the problems come from plots which might have: small unreadable fonts used for labels, labels used for variables are different from those in the text (they reflect the naming scheme used in the programme), unexplained equations of some fit with unrealistic accuracy in unexplained coefficients.
+
+
+    \vspace*{12pt}
+  } % end of parbox
+} % end of fbox
+
+%
+%
+% *********************************************************
+
+\vspace*{12pt}
+\totalmarks
+
+\end{document}
