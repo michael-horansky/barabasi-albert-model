@@ -81,10 +81,6 @@ def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], N_m=1
             degree_array = cur_BA_network.get_degree_distribution(N_max = N_max[m_i])
             x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = m_val)
             
-            #print("Number of elements in the last bin =", y_counts[-1])
-            
-            #TODO if the large-x cutoff persists, increase jmax by 1 and then manually check whether y_counts[-1] > 0; if yes, chop off the last z elements of all arrays
-            
             x_matrix.append(x)
             y_PDF_matrix.append(y_PDF)
             y_counts_matrix.append(y_counts)
@@ -194,9 +190,144 @@ def load_m_scaling_degree_distribution(dataset_name, keep_descriptors = False):
         return(PS, N_m, bin_scale, m_space, N_max_space, res_array)
     return(res_array)
     
+def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m=1, m = 3, PS = 'PA', bin_scale = 1.3):
+    # N_space = array of N_max values to test on
+    # N_m = number of repetitions per m value datapoint
+    if type(m) != list:
+        m = [m] * len(N_space)
+    res_avg_array = []
+    k_max_avg_array = []
+    k_max_std_array = []
+    print(f"--------- Commencing testing on {len(N_space)} instances (dataset '{dataset_name}') --------")
+    for N_i in range(len(N_space)):
+        N_max_val = N_space[N_i]
+        print(f"Current N_max = {N_max_val}; m = {m[N_i]}")
+        
+        x_matrix = []
+        y_PDF_matrix = []
+        y_counts_matrix = []
+        binedges_matrix = []
+        widest_sample_index = -1
+        x_max = 0
+        cur_k_max_array = []
+        for i in range(N_m):
+            print("  current index =", i+1)
+            cur_BA_network = BA_network(m = m[N_i], probability_strategy = PS)
+            
+            degree_array = cur_BA_network.get_degree_distribution(N_max = N_space[N_i])
+            cur_k_max_array.append(max(degree_array))
+            x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = m[N_i])
+            
+            x_matrix.append(x)
+            y_PDF_matrix.append(y_PDF)
+            y_counts_matrix.append(y_counts)
+            binedges_matrix.append(binedges)
+            
+            if max(x) > x_max:
+                x_max = max(x)
+                widest_sample_index = i
+        
+        if N_m == 1:
+            res_avg_array.append([x_matrix[0].copy(),y_PDF_matrix[0], np.zeros(len(y_PDF_matrix[0])),y_counts_matrix[0], np.zeros(len(y_counts_matrix[0])),binedges_matrix[0]])
+            k_max_avg_array.append(cur_k_max_array[0])
+            k_max_std_array.append(0.0)
+        else:
+            # calculate the ugly statisics
+            
+            # first, locate the x-array and binedges-array that spans the entire dataset
+            x = x_matrix[widest_sample_index]
+            binedges = binedges_matrix[widest_sample_index]
+            print("Length of sample-spanning x-array =", len(x))
+            # now append empty bins to all lacking y-arrays - assume the non-spanning binedges are always left-aligned
+            for i in range(N_m):
+                length_difference = len(x) - len(x_matrix[i])
+                if length_difference > 0:
+                    y_PDF_matrix[i] = np.concatenate((y_PDF_matrix[i], np.zeros(length_difference)))
+                    y_counts_matrix[i] = np.concatenate((y_counts_matrix[i], np.zeros(length_difference)))
+            # now calculate the statistics
+            y_PDF_avg = np.average(y_PDF_matrix, axis=0)
+            y_PDF_std = np.std(y_PDF_matrix, axis=0)
+            y_counts_avg = np.average(y_counts_matrix, axis=0)
+            y_counts_std = np.std(y_counts_matrix, axis=0)
+            res_avg_array.append([x,y_PDF_avg,y_PDF_std,y_counts_avg,y_counts_std,binedges])
+            k_max_avg_array.append(np.average(cur_k_max_array))
+            k_max_std_array.append(np.std(cur_k_max_array))
+    
+    # We now save the res_avg_array into a txt file
+    """
+    The file has the form:
+        1 [PS, N_m, bin_scale]
+        2 [m1, m2, m3...]
+        3 [N_max1, N_max2, N_max3...]
+        4 [k_max1, k_max2, k_max3...]
+        5 [k_max_std1, k_max_std2, k_max_std3...]
+        Then for each m_val, there are 6 rows:
+            1 [x]
+            2 [y_PDF]
+            3 [y_PDF_std]
+            4 [y_counts]
+            5 [y_counts_std]
+            5 [binedges]
+    """
+    output_delim = ', '
+    N_scaling_degree_distribution_output_file = open("data/N_k_scaling_" + dataset_name + ".txt", mode="w")
+    #filename_list_stringed = 'L'.join([str(elem) for elem in my_filename_list])
+    #meta_config_file.write(filename_list_stringed)
+    N_scaling_degree_distribution_output_file.write(f'{PS}, {N_m}, {bin_scale}\n')
+    N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in m]) + '\n')
+    N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in N_space]) + '\n')
+    N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in k_max_avg_array]) + '\n')
+    N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in k_max_std_array]) + '\n')
+    for N_i in range(len(N_space)):
+        for res_i in range(len(res_avg_array[N_i])):
+            N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in res_avg_array[N_i][res_i]]) + '\n')
+    N_scaling_degree_distribution_output_file.close()
+    
+    return(k_max_avg_array, k_max_std_array,res_avg_array)
+
+def load_N_scaling_degree_distribution(dataset_name, keep_descriptors = False):
+    
+    # Input file configuration parameters
+    head_line_number = 5
+    line_number_per_m_val = 6
+    data_line_types = [float, float, float, float, float, int]
+    
+    N_scaling_degree_distribution_input_file = open("data/N_k_scaling_" + dataset_name + ".txt", mode="r")
+    input_lines = N_scaling_degree_distribution_input_file.readlines()
+    N_scaling_degree_distribution_input_file.close()
+    
+    head_lines = [item.split(", ") for item in input_lines[:head_line_number]]
+    #data_lines = [[float(elem) for elem in item.split(", ")] for item in input_lines[head_line_number:]]
+    data_lines = [item.split(", ") for item in input_lines[head_line_number:]]
+    
+    PS = head_lines[0][0]
+    N_m = int(head_lines[0][1])
+    bin_scale = float(head_lines[0][2])
+    
+    m_space = [int(elem) for elem in head_lines[1]]
+    N_max_space = [float(elem) for elem in head_lines[2]]
+    
+    k_max_avg_array = [float(elem) for elem in head_lines[3]]
+    k_max_std_array = [float(elem) for elem in head_lines[4]]
     
     
+    res_array = []
+    try:
+        for m_i in range(len(m_space)):
+            res_array.append([])
+            for dataline_i in range(line_number_per_m_val):
+                res_array[m_i].append(np.array([data_line_types[dataline_i](item) for item in data_lines[m_i * line_number_per_m_val + dataline_i]]))
+    except IndexError:
+        print("ERROR: Input file broken")
+        return(-1)
+        
     
+    print(f"--------------- Loaded dataset '{dataset_name}' --------------")
+    print(f"Probability strategy: {PS}; Number of repetitions per datapoint = {N_m}; Bin scale = {bin_scale}")
+    print(f"m_space = {m_space}; N_max_space = {N_max_space}")
+    if keep_descriptors:
+        return(PS, N_m, bin_scale, m_space, N_max_space, k_max_avg_array, k_max_std_array, res_array)
+    return(k_max_avg_array, k_max_std_array, res_array)
 
 def N_scaling_test(N_space, method, N_m=1, m = 3, PS = 'PA', *args):
     # N_space = array of N_max values to test on
@@ -479,12 +610,20 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
     plt.tight_layout()
     plt.show()
 
-
-def task1_4(m_val = 3):
-    N_space = [1e2, 1e3, 1e4, 1e5]
-    res_array = N_scaling_test(N_space, BA_network.get_degree_distribution, 1, m_val, 'PA')
+def task1_4(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3):
     
-    for N_i in range(len(N_space)):
+    k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'PA', bin_scale = 1.3)
+    task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array)
+
+def task1_4_load(dataset_name):
+    
+    PS, N_m, bin_scale, m_space, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution(dataset_name, keep_descriptors = True)
+    task1_4_analysis(N_m, N_max_space, m_space, k_max_avg_array, k_max_std_array, res_array)
+
+def task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array):
+    
+    m = m[0]
+    """for N_i in range(len(N_space)):
         x, y = logbin(res_array[N_i])
         fit_x_space = np.linspace(min(x), max(x))
 
@@ -492,10 +631,51 @@ def task1_4(m_val = 3):
         #plt.loglog(np.exp(fit_log_x_space), np.exp(-fit_log_x_space * 3.0 + res_b_three), linestyle='dotted', label=f'$k=-3$')
         plt.loglog(fit_x_space, theoretical_gamma_p_infty(fit_x_space, m_val), linestyle='dotted', label=f'prediction ($N_{{max}} = 10^{{{np.round(np.log(N_space[N_i])/np.log(10))}}}$)', color=plt.gca().lines[-1].get_color())
     plt.legend()
+    plt.show()"""
+    plt.title(f"$k_{{max}}$ as a function of the number of iterations (m = {m})")
+    plt.xlabel("$N_{max}$")
+    plt.ylabel("$k_{max}$")
+    if sum(k_max_std_array) > 0:
+        plt.errorbar(N_space, k_max_avg_array, yerr = k_max_std_array / np.sqrt(N_m), label='values')
+    else:
+        plt.plot(N_space, k_max_avg_array, linestyle='x-', label='values')
+    
+    theoretical_k_max_avg = expected_max_k(m, N_space)
+    plt.plot(N_space, theoretical_k_max_avg, linestyle='dashed', label=f'prediction')
+    
+    plt.legend()
     plt.show()
+    """plt.title("Probability distribution of node degree")
+    plt.gca().set_xscale("log", base=10)
+    plt.gca().set_yscale("log", base=10)
+    plt.xlabel("$k$")
+    plt.ylabel("$p_{\\infty}(k)$")
+    for N_i in range(len(N_space)):
+        x, y_PDF, y_PDF_err, y_counts, y_counts_err, binedges = res_array[N_i]
+        x_nonzero = x[y_PDF!=0]
+        y_nonzero = y_PDF[y_PDF!=0]
+        
+        yerr_nonzero = y_PDF_err[y_PDF!=0]
+        
+        xerr_left = x - binedges[:-1]
+        xerr_right = binedges[1:] - x
+        
+        xerr_left_nonzero = xerr_left[y_PDF!=0]
+        xerr_right_nonzero = xerr_right[y_PDF!=0]
+        
+        if sum(yerr_nonzero) > 0:
+            plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($N_{{max}} = {N_space[N_i]}$)')
+        else:
+            plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($N_{{N_max}} = {N_space[N_i]}$)')
+        #plt.loglog(x, theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+    
+    plt.legend()
+    plt.show()"""
 
-task1_3_load('1_3_5_big')
+#task1_3_load('1_3_5_big')
 #task1_4_expected_k_max()
+#task1_4('test', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
+task1_4_load('first')
 
 """
 test = BA_network(m = 3, probability_strategy = 'PA')
