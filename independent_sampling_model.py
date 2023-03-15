@@ -37,7 +37,7 @@ N_max_space = [int(elem) for elem in [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5]]
 
 k_max_avg = []
 k_max_std = []
-N_m = 50
+N_m = 100
 
 for N_i in range(len(N_max_space)):
     

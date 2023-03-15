@@ -135,7 +135,7 @@ def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], N_m=1
             5 [binedges]
     """
     output_delim = ', '
-    m_scaling_degree_distribution_output_file = open("data/m_k_scaling_" + dataset_name + ".txt", mode="w")
+    m_scaling_degree_distribution_output_file = open("data/m_k_scaling_" + PS + "_" + dataset_name + ".txt", mode="w")
     #filename_list_stringed = 'L'.join([str(elem) for elem in my_filename_list])
     #meta_config_file.write(filename_list_stringed)
     m_scaling_degree_distribution_output_file.write(f'{PS}, {N_m}, {bin_scale}\n')
@@ -270,7 +270,7 @@ def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m
             5 [binedges]
     """
     output_delim = ', '
-    N_scaling_degree_distribution_output_file = open("data/N_k_scaling_" + dataset_name + ".txt", mode="w")
+    N_scaling_degree_distribution_output_file = open("data/N_k_scaling_" + PS + "_" + dataset_name + ".txt", mode="w")
     #filename_list_stringed = 'L'.join([str(elem) for elem in my_filename_list])
     #meta_config_file.write(filename_list_stringed)
     N_scaling_degree_distribution_output_file.write(f'{PS}, {N_m}, {bin_scale}\n')
@@ -356,12 +356,18 @@ def N_scaling_test(N_space, method, N_m=1, m = 3, PS = 'PA', *args):
         return(res_avg_array, res_std_array)
     return(res_avg_array)
 
-def theoretical_gamma_p_infty(k, m):
-    return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))
+def p_infty(k, m, PS = 'PA'):
+    if PS == 'PA':
+        return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))
+    if PS == 'RA':
+        return(np.power(m / (m + 1.0), k - m) / (m + 1.0))
 
-def primitive_function_gamma_p_infty(k, m):
+def primitive_function_gamma_p_infty(k, m, PS = 'PA'):
     # This is the promitive function of theoretical_gamma_p_infty(k, m)
-    return(m * (m + 1.0) * (np.log(k) - 2.0 * np.log(k + 1.0) + np.log(k + 2.0)))
+    if PS == 'PA':
+        return(m * (m + 1.0) * (np.log(k) - 2.0 * np.log(k + 1.0) + np.log(k + 2.0)))
+    if PS == 'RA':
+        return(np.power(m / (m + 1.0), k - m) / ((m + 1.0) * np.log(m / (m + 1.0))))
 
 def expected_frequency_p_infty(k, m):
     # this is a discrete version of theoretical_gamma_p_infty
@@ -370,19 +376,29 @@ def expected_frequency_p_infty(k, m):
     else:
         return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))
 
-def expected_bin_frequency_p_infty(m, k_min, k_max = -1):
+def expected_bin_frequency_p_infty(m, k_min, k_max = -1, PS = 'PA'):
     # counts the theoretical frequency for k_min <= k < k_max
     # if k_max == -1, it is interpreted as infinity
-    if k_max == -1:
-        return(m * (m + 1.0) / (k_min * (k_min + 1.0)))
-    return(m * (m + 1.0) * (k_max * (k_max + 1.0) - k_min * (k_min + 1.0)) / (k_max * (k_max + 1.0) * k_min * (k_min + 1.0)))
-def theoretical_binned_gamma_p_infty(bin_edges, m):
+    if PS == 'PA':
+        if k_max == -1:
+            return(m * (m + 1.0) / (k_min * (k_min + 1.0)))
+        return(m * (m + 1.0) * (k_max * (k_max + 1.0) - k_min * (k_min + 1.0)) / (k_max * (k_max + 1.0) * k_min * (k_min + 1.0)))
+    if PS == 'RA':
+        r = m / (m + 1.0)
+        if k_max == -1:
+            return(np.power(r, k_min - m))
+        return(np.power(r, k_min - m) - np.power(r, k_max - m))
+def theoretical_binned_p_infty(bin_edges, m, PS = 'PA'):
     # This calculates the expected normalized AND unnormalized binned distribution of the gamma func. p_infty function
     # y[i] = (bin_edges[i+1] - bin_edges[i])^-1 * \int_{bin_edges[i]}^{bin_edges[i+1]} f(k) dk
-    y_PDF = (primitive_function_gamma_p_infty(bin_edges[1:], m) - primitive_function_gamma_p_infty(bin_edges[:-1], m)) / (bin_edges[1:] - bin_edges[:-1])
+    
+    #if PS == 'PA':
+    y_PDF = (primitive_function_gamma_p_infty(bin_edges[1:], m, PS) - primitive_function_gamma_p_infty(bin_edges[:-1], m, PS)) / (bin_edges[1:] - bin_edges[:-1])
     y_counts = np.zeros(len(bin_edges)-1)
     for i in range(len(bin_edges)-1):
-        y_counts[i] = expected_bin_frequency_p_infty(m, bin_edges[i], bin_edges[i+1])
+        y_counts[i] = expected_bin_frequency_p_infty(m, bin_edges[i], bin_edges[i+1], PS)
+    #elif PS == 'RA':
+        
     """for i in range(len(bin_edges)-2):
         y_counts[i] = expected_bin_frequency_p_infty(m, bin_edges[i], bin_edges[i+1])
     y_counts[-1] = expected_bin_frequency_p_infty(m, bin_edges[-2], -1)"""
@@ -393,7 +409,7 @@ def weighted_chi_sq(y_measurement, y_prediction, y_std):
       chi_sq = np.sum( ((y_measurement-y_prediction)/y_std)**2/y_prediction )  
       return(chi_sq)
 
-def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, min_bin_count = 5):
+def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, min_bin_count = 5, PS = 'PA'):
     print("  Sanitizing the fat-tail bins by combining them from the right until the minimum value isn't smaller than", min_bin_count)
     cum_bin_count = 0
     cutoff_index = len(bincounts)
@@ -405,15 +421,15 @@ def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, 
         cum_bin_count += bincounts[cutoff_index]
     if cum_bin_count == 0:
         print("  LOG: All bins satisfied the min_bin_count condition already; no sanitization occurred")
-        return(bincounts, binedges, np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_val, max(binedges))])))
+        return(bincounts, binedges, np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_val, max(binedges), PS=PS)])))
     new_bincounts = np.concatenate((bincounts[:cutoff_index], [cum_bin_count]))
     new_binedges = binedges.copy()[:cutoff_index+1] #this implies an 'infinity' as a final entry, which we don't include, ofc
     # NOTE the goodness-of-fit doesn't actually take into account the x-position of the stuff. That's okay i guess. Well it does in the sense the theoretical prediction is an x sum
-    new_theoretical_binned_frequency = np.concatenate((theoretical_binned_frequency[:cutoff_index], [expected_bin_frequency_p_infty(m_val,new_binedges[-1])]))
+    new_theoretical_binned_frequency = np.concatenate((theoretical_binned_frequency[:cutoff_index], [expected_bin_frequency_p_infty(m_val,new_binedges[-1], PS = PS)]))
     print(f'  LOG: {len(bincounts) - cutoff_index} bins in the fat tail combined; new minimum bincount is {int(min(new_bincounts))}')
     return(new_bincounts, new_binedges, new_theoretical_binned_frequency)
 
-def expected_max_k(m, N, k_max = 1000000):
+def independent_sampling_expected_max_k(m, N, k_max = 1000000):
     # make sure k_max >> expected k_max (also preferably k_max >> number of steps you drive the network for)
     res_sum = 0.0
     number_of_repetitions = k_max - m
@@ -428,28 +444,22 @@ def expected_max_k(m, N, k_max = 1000000):
     print("Analysis done.                                                     ") #this is SUCH an ugly solution.
     return(res_sum)
 
-def task1_3(new_dataset_name, m_space = [1, 3, 5], N_max = [5e4, 1e5, 2e5], N_m = 1):
-    
-    if type(N_max) != list:
-        N_max = [N_max] * len(m_space)
-    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, N_m=N_m, PS = 'PA', N_max = N_max, bin_scale = 1.3)
-    task1_3_analysis(N_m, m_space, N_max, res_array)
+def expected_max_k(m, N, PS = 'PA'):
+    if PS == 'PA':
+        return((-1.0 + np.sqrt(1 + 4.0 * N * m * (m + 1.0)))/2.0)
+    if PS == 'RA':
+        return(m + np.log(N) / np.log((m + 1.0) / m))
 
-def task1_3_load(dataset_name):
-    
-    PS, N_m, bin_scale, m_space, N_max_space, res_array = load_m_scaling_degree_distribution(dataset_name, keep_descriptors = True)
-    task1_3_analysis(N_m, m_space, N_max_space, res_array)
-
-def task1_3_analysis(N_m, m_space, N_max, res_array):
+def k_degree_distribution_analysis(PS, N_m, m_space, N_max, res_array):
     
     # res_array obtained either by m_scaling_degree_distribution or by load_m_scaling_degree_distribution
-
-    x_list = []
-    y_PDF_list = []
-    y_counts_list = []
-    y_PDF_err_list = []
-    y_counts_err_list = []
-    binedges_list = []
+    
+    print("---------------------------------------------------- ")
+    print("--- Analysis of a degree distribution commencing ---")
+    print("----------------------------------------------------")
+    
+    print(f"Probability strategy = {PS}")
+    
     theoretical_binned_distribution_list = []
     theoretical_binned_frequency_list = []
     
@@ -477,9 +487,8 @@ def task1_3_analysis(N_m, m_space, N_max, res_array):
         
         
         # Pearson's chi-squared test
-        theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_gamma_p_infty(binedges, m_space[m_i])
+        theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m_space[m_i], PS = PS)
         print("  Sum of theoretical binned frequency counts =", sum(theoretical_binned_frequency))
-        
         
         # theoretical distribution is normalized on m <= k <= infty, but in the measurement we have the N_max limitation, which
         # omits these high values. Hence we will extend the last bin in our counts (theoretical and measured), which has borders at
@@ -488,7 +497,7 @@ def task1_3_analysis(N_m, m_space, N_max, res_array):
         #theoretical_binned_frequency_with_infinity = np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_space[m_i], max(binedges))]))
         #y_counts_with_infinity = y_counts.copy()#np.concatenate((y_counts, [0.0]))
         #NOTE we now do the "cumulative infinity binning"
-        y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m_space[m_i])
+        y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m_space[m_i], PS=PS)
         print("  sum of theoretical binned frequency INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
         
         # BUT pearson is invalid for bins with counts smaller than 5, so we cannot include the infinity bin
@@ -510,12 +519,6 @@ def task1_3_analysis(N_m, m_space, N_max, res_array):
         #print(f"  reduced chi-squared = {w_chisq / chi_sq_df}")
         
         # save your stuff for plotting
-        x_list.append(x)
-        y_PDF_list.append(y_PDF)
-        y_PDF_err_list.append(y_PDF_err)
-        y_counts_list.append(y_counts)
-        y_counts_err_list.append(y_counts_err)
-        binedges_list.append(binedges)
         theoretical_binned_distribution_list.append(theoretical_binned_distribution)
         theoretical_binned_frequency_list.append(theoretical_binned_frequency)
     
@@ -525,22 +528,23 @@ def task1_3_analysis(N_m, m_space, N_max, res_array):
     plt.xlabel("$k$")
     plt.ylabel("$p_{\\infty}(k)$")
     for m_i in range(len(m_space)):
-        x_nonzero = x_list[m_i][y_PDF_list[m_i]!=0]
-        y_nonzero = y_PDF_list[m_i][y_PDF_list[m_i]!=0]
+        x, y_PDF, y_PDF_err, y_counts, y_counts_err, binedges = res_array[m_i]
+        x_nonzero = x[y_PDF!=0]
+        y_nonzero = y_PDF[y_PDF!=0]
         
-        yerr_nonzero = y_PDF_err_list[m_i][y_PDF_list[m_i]!=0]
+        yerr_nonzero = y_PDF_err[y_PDF!=0]
         
-        xerr_left = x_list[m_i] - binedges_list[m_i][:-1]
-        xerr_right = binedges_list[m_i][1:] - x_list[m_i]
+        xerr_left = x - binedges[:-1]
+        xerr_right = binedges[1:] - x
         
-        xerr_left_nonzero = xerr_left[y_PDF_list[m_i]!=0]
-        xerr_right_nonzero = xerr_right[y_PDF_list[m_i]!=0]
+        xerr_left_nonzero = xerr_left[y_PDF!=0]
+        xerr_right_nonzero = xerr_right[y_PDF!=0]
         
         if sum(yerr_nonzero) > 0:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
         else:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
-        plt.loglog(x_list[m_i], theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+        plt.loglog(x, theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
     
     plt.legend()
     plt.subplot(2, 1, 2)
@@ -550,28 +554,43 @@ def task1_3_analysis(N_m, m_space, N_max, res_array):
     plt.ylabel("$N_k$(bin)")
     
     for m_i in range(len(m_space)):
-        x_nonzero = x_list[m_i][y_PDF_list[m_i]!=0]
-        y_nonzero = y_counts_list[m_i][y_PDF_list[m_i]!=0]
+        x, y_PDF, y_PDF_err, y_counts, y_counts_err, binedges = res_array[m_i]
+        x_nonzero = x[y_PDF!=0]
+        y_nonzero = y_counts[y_PDF!=0]
         
-        yerr_nonzero = y_counts_err_list[m_i][y_PDF_list[m_i]!=0]
+        yerr_nonzero = y_counts_err[y_PDF!=0]
         
-        xerr_left = x_list[m_i] - binedges_list[m_i][:-1]
-        xerr_right = binedges_list[m_i][1:] - x_list[m_i]
+        xerr_left = x - binedges[:-1]
+        xerr_right = binedges[1:] - x
         
-        xerr_left_nonzero = xerr_left[y_PDF_list[m_i]!=0]
-        xerr_right_nonzero = xerr_right[y_PDF_list[m_i]!=0]
+        xerr_left_nonzero = xerr_left[y_PDF!=0]
+        xerr_right_nonzero = xerr_right[y_PDF!=0]
         
         if sum(yerr_nonzero) > 0:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
         else:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
-        plt.loglog(x_list[m_i], theoretical_binned_frequency_list[m_i] * N_max[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+        plt.loglog(x, theoretical_binned_frequency_list[m_i] * N_max[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
     
     plt.legend()
     plt.tight_layout()
     plt.show()
 
+def task1_3(new_dataset_name, m_space = [1, 3, 5], N_max = [5e4, 1e5, 2e5], N_m = 1):
+    
+    if type(N_max) != list:
+        N_max = [N_max] * len(m_space)
+    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, N_m=N_m, PS = 'PA', N_max = N_max, bin_scale = 1.3)
+    k_degree_distribution_analysis('PA', N_m, m_space, N_max, res_array)
+
+def task1_3_load(dataset_name):
+    
+    PS, N_m, bin_scale, m_space, N_max_space, res_array = load_m_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
+    k_degree_distribution_analysis(PS, N_m, m_space, N_max_space, res_array)
+
 def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 1e5]):
+    
+    # this is just the power law fitting of the theoretical k_max in task 1-4. Cannot be generalized to RA
     
     N_space = np.power(2.0, np.arange(20))#np.array([5, 1e1, 1e2, 1e3, 1e4, 1e5])
     m_space = np.arange(3, 15, 2).astype('int')
@@ -583,7 +602,7 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
     
     for m_val in m_space_og:
         print("Analysing m =", m_val)
-        mean_k_max_space = expected_max_k(m_val, N_space)
+        mean_k_max_space = expected_max_k(m_val, N_space, PS = 'PA')
         plt.loglog(N_space, mean_k_max_space, 'x-', label=f'values ($m={m_val}$)')
         res_k, std_k, res_b, std_b, x_log_min, x_log_max = loglog_fit(N_space, mean_k_max_space)
         fitspace = np.linspace(x_log_min, x_log_max, 100)
@@ -600,7 +619,7 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
         print("Analysing N =", N_val)
         mean_k_max_space = []
         for cur_m_val in m_space:
-            mean_k_max_space.append(expected_max_k(cur_m_val, N_val))
+            mean_k_max_space.append(expected_max_k(cur_m_val, N_val, PS = 'PA'))
         plt.loglog(m_space, mean_k_max_space, 'x-', label=f'values ($N={N_val}$)')
         res_k, std_k, res_b, std_b, x_log_min, x_log_max = loglog_fit(m_space, mean_k_max_space)
         fitspace = np.linspace(x_log_min, x_log_max, 100)
@@ -613,16 +632,17 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
 def task1_4(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3):
     
     k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'PA', bin_scale = 1.3)
-    task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array)
+    k_max_analysis('PA', N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array)
 
 def task1_4_load(dataset_name):
     
-    PS, N_m, bin_scale, m_space, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution(dataset_name, keep_descriptors = True)
-    task1_4_analysis(N_m, N_max_space, m_space, k_max_avg_array, k_max_std_array, res_array)
+    PS, N_m, bin_scale, m_space, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
+    k_max_analysis(PS, N_m, N_max_space, m_space, k_max_avg_array, k_max_std_array, res_array)
 
-def task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array):
+def k_max_analysis(PS, N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = False):
     
-    m = m[0]
+    if type(m) == list:
+        m = m[0]
     """for N_i in range(len(N_space)):
         x, y = logbin(res_array[N_i])
         fit_x_space = np.linspace(min(x), max(x))
@@ -632,26 +652,43 @@ def task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array
         plt.loglog(fit_x_space, theoretical_gamma_p_infty(fit_x_space, m_val), linestyle='dotted', label=f'prediction ($N_{{max}} = 10^{{{np.round(np.log(N_space[N_i])/np.log(10))}}}$)', color=plt.gca().lines[-1].get_color())
     plt.legend()
     plt.show()"""
-    plt.title(f"$k_{{max}}$ as a function of the number of iterations (m = {m})")
-    plt.xlabel("$N_{max}$")
-    plt.ylabel("$k_{max}$")
-    if sum(k_max_std_array) > 0:
-        plt.errorbar(N_space, k_max_avg_array, yerr = k_max_std_array / np.sqrt(N_m), label='values')
-    else:
-        plt.plot(N_space, k_max_avg_array, linestyle='x-', label='values')
+    theoretical_k_max_avg = expected_max_k(m, np.array(N_space), PS)
+    if plot_measured_k_max:
+        plt.title(f"$k_{{max}}$ as a function of the number of iterations (m = {m})")
+        plt.xlabel("$N_{max}$")
+        plt.ylabel("$k_{max}$")
+        if sum(k_max_std_array) > 0:
+            plt.errorbar(N_space, k_max_avg_array, yerr = k_max_std_array / np.sqrt(N_m), label='values')
+        else:
+            plt.plot(N_space, k_max_avg_array, linestyle='x-', label='values')
+        
+        plt.plot(N_space, theoretical_k_max_avg, linestyle='dashed', label=f'prediction')
+        
+        plt.legend()
+        plt.show()
     
-    theoretical_k_max_avg = expected_max_k(m, N_space)
-    plt.plot(N_space, theoretical_k_max_avg, linestyle='dashed', label=f'prediction')
     
-    plt.legend()
-    plt.show()
-    """plt.title("Probability distribution of node degree")
-    plt.gca().set_xscale("log", base=10)
-    plt.gca().set_yscale("log", base=10)
-    plt.xlabel("$k$")
-    plt.ylabel("$p_{\\infty}(k)$")
+    # Now for the data collapse
+    
+    # k_max goes like m * sqrt(N)
+    # hence we want k/k_max on x-axis. F(k/k_max) on y-axis (the cutoff function)
+    
+    
+    plt.title("Data collapse of node degrees")
+    #plt.gca().set_xscale("log", base=10)
+    #plt.gca().set_yscale("log", base=10)
+    plt.xlabel("$k/k_{max}$")
+    plt.ylabel("$\\mathcal{{F}}\\left(k/k_{{\\mathrm{{max}}}}\\right) \\equiv p_N(k)\\cdot p_{\\infty}^{-1}(k)$")
     for N_i in range(len(N_space)):
         x, y_PDF, y_PDF_err, y_counts, y_counts_err, binedges = res_array[N_i]
+        
+        
+        #theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m)
+        #print("  Sum of theoretical binned frequency counts =", sum(theoretical_binned_frequency))
+        #y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m)
+        #print("  sum of theoretical binned frequency INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
+        
+        
         x_nonzero = x[y_PDF!=0]
         y_nonzero = y_PDF[y_PDF!=0]
         
@@ -663,19 +700,51 @@ def task1_4_analysis(N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array
         xerr_left_nonzero = xerr_left[y_PDF!=0]
         xerr_right_nonzero = xerr_right[y_PDF!=0]
         
-        if sum(yerr_nonzero) > 0:
-            plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($N_{{max}} = {N_space[N_i]}$)')
-        else:
-            plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($N_{{N_max}} = {N_space[N_i]}$)')
-        #plt.loglog(x, theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+        x_factor = 1.0 / theoretical_k_max_avg[N_i] # shouldn't this be the EXPERIMENTAL k_max??
+        y_factor = 1.0 / p_infty(x, m, PS=PS)#x_nonzero * (x_nonzero + 1.0) * (x_nonzero + 2.0) / (2.0 * m * (m + 1.0))
+        
+        x_collapsed = x * x_factor
+        y_collapsed = y_PDF * y_factor
+        
+        plt.plot(x_collapsed, y_collapsed, '-x', label=f'$N_{{\\mathrm{{max}}}} = {Decimal(N_space[N_i]):.1e}$')
+        # since the y-factor is literally 1/p_infty(k), and the theoretical bin dist is p_infty(k), the prediction is just 1.0 (which is what F_N(x) tends to with N->infty)
+        if N_i == len(N_space) - 1:
+            plt.plot(x * x_factor, [1.0] * len(x), linestyle='dotted', label=f'$\\mathcal{{F}}(N\\to\\infty)=1$')
     
     plt.legend()
-    plt.show()"""
+    plt.tight_layout()
+    plt.show()
+
+def task2_1(new_dataset_name, m_space = [1, 3, 5], N_max = [5e3, 1e4, 2e4], N_m = 1):
+    
+    if type(N_max) != list:
+        N_max = [N_max] * len(m_space)
+    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, N_m=N_m, PS = 'RA', N_max = N_max, bin_scale = 1.3)
+    k_degree_distribution_analysis('RA', N_m, m_space, N_max, res_array)
+
+def task2_1_load(dataset_name):
+    
+    PS, N_m, bin_scale, m_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
+    k_degree_distribution_analysis(PS, N_m, m_space, N_max_space, res_array)
+
+def task2_2(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3, plot_measured_k_max = False):
+    
+    k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'RA', bin_scale = 1.3)
+    k_max_analysis('RA', N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = plot_measured_k_max)
+
+def task2_2_load(dataset_name, plot_measured_k_max = False):
+    
+    PS, N_m, bin_scale, m_space, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
+    k_max_analysis(PS, N_m, N_max_space, m_space, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
 
 #task1_3_load('1_3_5_big')
 #task1_4_expected_k_max()
 #task1_4('test', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
-task1_4_load('first')
+#task1_4_load('first')
+
+#task2_1_load('testicek')
+#task2_2("megakek", [2e3, 5e3, 1e4], N_m = 5)
+task2_2_load("megakek", plot_measured_k_max = True)
 
 """
 test = BA_network(m = 3, probability_strategy = 'PA')

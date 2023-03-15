@@ -6,6 +6,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 import time
 
+from decimal import Decimal
+
 from logbin_2020_CITE_THIS import *
 
 # MATH FUNCTIONS
