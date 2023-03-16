@@ -952,12 +952,16 @@ def task2_2_load(dataset_name, plot_measured_k_max = False):
 
 #task1_3_load('1_3_5_big')
 #task1_4_expected_k_max()
-task1_4('third', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 30)
-#task1_4_load('COMBINED_first_second')
+#task1_4('third', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
+#task1_4_load('COMBINED_COMBINED_first_second_third')
 
 #task2_1_load('testicek')
 #task2_2("megakek", [2e3, 5e3, 1e4], N_m = 5)
 #task2_2_load("megakek", plot_measured_k_max = True)
 
-#PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('first', 'second', 'N', PS = 'PA')
+#PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_first_second', 'third', 'N', PS = 'PA')
 #k_max_analysis(PS, N_m, N_max_space, m, k_max_avg_array, k_max_std_array, res_array)
+
+
+EVM_jebak = EVM_network()
+

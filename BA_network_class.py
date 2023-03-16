@@ -55,14 +55,16 @@ class BA_network():
         self.unnorm_prob = []
         self.Z = 0
     
-    def __init__(self, m = 3, probability_strategy = 'PA'):
+    def __init__(self, m = 3, probability_strategy = 'PA', r = 1):
         # Creates an empty network 
         
         self.m = m
         self.reset()
         
         # probability strategy: 'PA' = preferential attachement, 'RA' = random attachement
+        #                       [PS1, PS2] = EVM with new vertex strategy PS1 and existing vertices strategy PS2
         self.probability_strategy = probability_strategy
+        self.r = r
     
     def vertex_descriptor(self, i):
         adjacency_row_separator = ', '
@@ -295,4 +297,58 @@ class BA_network():
         degree_distribution = self.get_degree_distribution(N_max)
         x, y_PDF, y_counts, binedges = logbin(degree_distribution, scale = bin_scale, x_min = self.m)
         
+
+# ---------------- Existing Vertices Model ---------------------------
+
+class EVM_network(BA_network):
+    
+    def reset(self):
+        self.adjacency_list = []
+        self.t = 0
+        
+        # We keep two unnorm probs and two Zs - one for new vertex, second for existing vertices
+        self.unnorm_prob1 = []
+        self.unnorm_prob2 = []
+        self.Z1 = 0
+        self.Z2 = 0
+    def __init__(self, m = 3, r = 1, PS1='RA', PS2='PA'):
+        # PS1 used for the new vertex
+        # PS2 used for existing vertices
+        self.m = m
+        self.r = r
+        self.reset()
+        
+        self.PS1 = PS1
+        self.PS2 = PS2
+        # so that we don't have to redefine descriptors
+        self.probability_strategy = f"EVM with PS1 = '{PS1}', PS2 = '{PS2}'"
+    
+    
+    # ------------------ OPERATIVE FUNCTIONS ----------------------
+    
+    def add_vertex(self):
+        # Adds a new vertex, returns its index
+        self.adjacency_list.append([])
+        
+        # Calculate its probability weight depending on the strategy
+        if self.probability_strategy == 'PA':
+            new_mode_weight = 0.0
+        elif self.probability_strategy == 'RA':
+            new_mode_weight = 1.0
+        
+        self.unnorm_prob.append(new_mode_weight)
+        self.Z += new_mode_weight
+        return(len(self.adjacency_list)-1)
+        
+    
+    def add_edge(self, i, j):
+        # Add an undirected edge between vertices with indices i and j
+        self.adjacency_list[i].append(j)
+        self.adjacency_list[j].append(i)
+        
+        # Update the probability weights if necessary
+        if self.probability_strategy == 'PA':
+            self.unnorm_prob[i] += 1.0
+            self.unnorm_prob[j] += 1.0
+            self.Z += 2.0
 
