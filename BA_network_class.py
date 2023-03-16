@@ -227,19 +227,24 @@ class BA_network():
         for new_edge in range(self.m):
             self.add_edge(new_i, target_vertices[new_edge])
     
-    def simulate(self, N_max):
+    def simulate(self, N_max, N_max_ultimate = -1, start_time = -1):
         # Will drive the model until the number of vertices reaches N_max
+        # N_max_ultimate is the value of N_max which is used to calculate percentage done. If left unassigned, it will equal N_max
+        # start_time is the system time at which the simulation begun - useful when N_max_ultimate != -1
+        if N_max_ultimate == -1:
+            N_max_ultimate = N_max
         
-        delta_t = N_max - len(self.adjacency_list)
+        delta_t = N_max_ultimate - len(self.adjacency_list)
         t_start = self.t
-        start_time = time.time()
+        if start_time == -1:
+            start_time = time.time()
         progress_percentage = 0
         # TODO make the ETF smarter by considering each step has O(N)
         
-        # We consider the total "time tokens": T = sum_N O_step(N) = N(0) + N(1) + ... + N_max = (N_max - N(0) + 1) * (N_max + N(0)) / 2
+        # We consider the total "time tokens": T = sum_N O_step(N) = N(0) + N(1) + ... + N_max = (N_max * (N_max + 1) - (N(0) - 1) * N(0)) / 2
         # Each step we count how many time tokens we accumulated and determine the percentage
-        time_tokens_total = (N_max - len(self.adjacency_list) + 1) * (N_max + len(self.adjacency_list)) / 2.0
-        time_tokens_accumulated = 0
+        time_tokens_total = N_max_ultimate * (N_max_ultimate - 1.0) / 2.0
+        time_tokens_accumulated = len(self.adjacency_list) * (len(self.adjacency_list) - 1.0) / 2.0
         
         while(len(self.adjacency_list) < N_max):
             time_tokens_accumulated += len(self.adjacency_list)
@@ -248,7 +253,9 @@ class BA_network():
                 #print("Analysis in progress: " + str(progress_percentage) + "%", end='\r')
                 print("Analysis in progress: " + str(progress_percentage) + "%; est. time of finish: " + time.strftime("%H:%M:%S", time.localtime( (time.time()-start_time) * 100 / progress_percentage + start_time )), end='\r')
             self.step()
-        print("Analysis done.                                                     ") #this is SUCH an ugly solution.
+        if N_max == N_max_ultimate:
+            print("Analysis done.                                                     ") #this is SUCH an ugly solution.
+        #return(start_time)
     
     # ----------------- Analysis of self
     
@@ -272,8 +279,17 @@ class BA_network():
     
     def get_degree_distribution(self, N_max = 1e4):
         self.initial_graph(strategy = 'r', N = 10, param = self.m)
-        self.simulate(N_max)
-        return(self.degree_distribution())
+        
+        if type(N_max) != list:
+            self.simulate(N_max)
+            return(self.degree_distribution())
+        else:
+            degree_distribution_list = []
+            first_start_time = time.time()
+            for N_max_val in N_max:
+                self.simulate(N_max_val, N_max_ultimate = N_max[-1], start_time = first_start_time)
+                degree_distribution_list.append(self.degree_distribution())
+            return(degree_distribution_list)
     
     def get_binned_degree_distribution(self, N_max = 1e4, bin_scale = 1.3):
         degree_distribution = self.get_degree_distribution(N_max)
