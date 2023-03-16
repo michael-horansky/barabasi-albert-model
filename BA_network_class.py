@@ -92,11 +92,14 @@ class BA_network():
         self.adjacency_list.append([])
         
         # Calculate its probability weight depending on the strategy
-        if self.probability_strategy == 'PA':
-            new_mode_weight = 0.0
-        elif self.probability_strategy == 'RA':
-            new_mode_weight = 1.0
-        
+        new_mode_weight_dictionary = {'PA' : 0.0, 'RA' : 1.0}
+        if type(self.probability_strategy) == str:
+            new_mode_weight = new_mode_weight_dictionary[self.probability_strategy]
+        else:
+            new_mode_weight = []
+            for ps_elem in self.probability_strategy:
+                new_mode_weight.append(new_mode_weight_dictionary[ps_elem])
+            new_mode_weight = np.array(new_mode_weight)
         self.unnorm_prob.append(new_mode_weight)
         self.Z += new_mode_weight
         return(len(self.adjacency_list)-1)
@@ -108,10 +111,15 @@ class BA_network():
         self.adjacency_list[j].append(i)
         
         # Update the probability weights if necessary
-        if self.probability_strategy == 'PA':
-            self.unnorm_prob[i] += 1.0
-            self.unnorm_prob[j] += 1.0
-            self.Z += 2.0
+        if type(self.probability_strategy == list):
+            delta_pi = np.array([int(elem=='PA') for elem in self.probability_strategy])
+        elif self.probability_strategy == 'PA':
+            delta_pi = 1.0
+        else:
+            delta_pi = 0.0
+        self.unnorm_prob[i] += delta_pi
+        self.unnorm_prob[j] += delta_pi
+        self.Z += 2.0 * delta_pi
     
     
     # --------------- Initial graph generators
@@ -222,12 +230,28 @@ class BA_network():
         # A single step (time increment) in the BA model
         self.t += 1
         
-        #First we pick m vertices which will form an edge with the new vertex
-        target_vertices = weighted_sample(self.unnorm_prob, self.m, self.Z)
-        # Now we add the new vertex and create m edges
-        new_i = self.add_vertex()
-        for new_edge in range(self.m):
-            self.add_edge(new_i, target_vertices[new_edge])
+        if type(self.probability_strategy) != list:
+            #First we pick m vertices which will form an edge with the new vertex
+            target_vertices = weighted_sample(self.unnorm_prob, self.m, self.Z)
+            # Now we add the new vertex and create m edges
+            new_i = self.add_vertex()
+            for new_edge in range(self.m):
+                self.add_edge(new_i, target_vertices[new_edge])
+        else:
+            #EVM
+            # we assume a vertex cannot have an edge with itself.
+            # we also ASSUME that in this model, even for the existing vertices edges, two or more edges cannot be connected to the same vertex. This is easily changeable
+            
+            new_vertex_sample = weighted_sample([row[0] for row in self.unnorm_prob], self.r, self.Z[0])
+            existing_vertices_sample_combined = weighted_sample([row[1] for row in self.unnorm_prob], 2 * (self.m - self.r), self.Z[1])
+            existing_vertices_sample_sources = existing_vertices_sample_combined[:(self.m - self.r)]
+            existing_vertices_sample_targets = existing_vertices_sample_combined[(self.m - self.r):]
+            
+            new_i = self.add_vertex()
+            for new_v_i in range(self.r):
+                self.add_edge(new_i, new_vertex_sample[new_v_i])
+            for existing_v_i in range(self.m - self.r):
+                self.add_edge(existing_vertices_sample_sources[existing_v_i], existing_vertices_sample_targets[existing_v_i])
     
     def simulate(self, N_max, N_max_ultimate = -1, start_time = -1):
         # Will drive the model until the number of vertices reaches N_max

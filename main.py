@@ -3,8 +3,7 @@ from BA_network_class import *
 
 # -----------------------------------------------------------
 # -------------------- Fitting functions --------------------
-# -----------------------------------------------------------
-
+# -----------------------------------------------------------    
 
 def loglog_fit(xspace, yspace, yerr = None):
     x_log = np.log(xspace)
@@ -91,13 +90,16 @@ def N_scaling_test(N_space, method, N_m=1, m = 3, PS = 'PA', *args):
     return(res_avg_array)
 
 # special scaling test for degree distribution that handles the statistical data churning on the ugly logbinned arrays
-def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], N_m=1, PS = 'PA', N_max = 1e4, bin_scale = 1.3):
+def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], r_space = -1, N_m=1, PS = 'PA', N_max = 1e4, bin_scale = 1.3):
     # m_space = array of m values to test on
+    # r_space is also interpreted as the minimum cutoff in logbinning for all models
     # N_m = number of repetitions per m value datapoint
     # PS is the strategy
     # N_max = final number of nodes - THIS CAN BE A LIST
     if type(N_max) != list:
         N_max = [N_max] * len(m_space)
+    if r_space == -1:
+        r_space = m_space
     res_array = []
     print(f"--------- Commencing testing on {len(m_space)} instances (dataset '{dataset_name}') --------")
     for m_i in range(len(m_space)):
@@ -112,10 +114,10 @@ def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], N_m=1
         x_max = 0
         for i in range(N_m):
             print("  current index =", i+1)
-            cur_BA_network = BA_network(m = m_val, probability_strategy = PS)
+            cur_BA_network = BA_network(m = m_val, probability_strategy = PS, r = r_space[m_i])
             
             degree_array = cur_BA_network.get_degree_distribution(N_max = N_max[m_i])
-            x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = m_val)
+            x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = r_space[m_i])
             
             x_matrix.append(x)
             y_PDF_matrix.append(y_PDF)
@@ -157,10 +159,10 @@ def m_scaling_degree_distribution(dataset_name = 'dataset', m_space = [3], N_m=1
         #print(f"  Result = {res_array[-1]}")
     
     # We now save the res_array into a txt file
-    save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space, N_max_space, res_array)
+    save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space, r_space, N_max, res_array)
     return(res_array)
     
-def OLD_N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m=1, m = 3, PS = 'PA', bin_scale = 1.3):
+def OLD_N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m=1, m = 3, r = 3, PS = 'PA', bin_scale = 1.3):
     # N_space = array of N_max values to test on
     # N_m = number of repetitions per m value datapoint
     if type(m) != list:
@@ -182,7 +184,7 @@ def OLD_N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4],
         cur_k_max_array = []
         for i in range(N_m):
             print("  current index =", i+1)
-            cur_BA_network = BA_network(m = m[N_i], probability_strategy = PS)
+            cur_BA_network = BA_network(m = m[N_i], probability_strategy = PS, r = r)
             
             degree_array = cur_BA_network.get_degree_distribution(N_max = N_space[N_i])
             cur_k_max_array.append(max(degree_array))
@@ -255,9 +257,12 @@ def OLD_N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4],
     
     return(k_max_avg_array, k_max_std_array,res_array)
     
-def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m=1, m = 3, PS = 'PA', bin_scale = 1.3):
+def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m=1, m = 3, r = -1, PS = 'PA', bin_scale = 1.3):
     # N_space = array of N_max values to test on
     # N_m = number of repetitions per m value datapoint
+    if r == -1:
+        r = m
+    
     res_array = []
     k_max_avg_array = []
     k_max_std_array = []
@@ -282,7 +287,7 @@ def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m
     
     for i in range(N_m):
         print(f"  current index = {i+1}/{N_m}")
-        cur_BA_network = BA_network(m = m, probability_strategy = PS)
+        cur_BA_network = BA_network(m = m, probability_strategy = PS, r = r)
         
         degree_array_list = cur_BA_network.get_degree_distribution(N_max = N_space)
         
@@ -290,7 +295,7 @@ def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m
             degree_array = degree_array_list[N_i]
         
             cur_k_max_array[N_i].append(max(degree_array))
-            x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = m)
+            x, y_PDF, y_counts, binedges = logbin(degree_array, scale = bin_scale, x_min = r)
             
             x_matrix[N_i].append(x)
             y_PDF_matrix[N_i].append(y_PDF)
@@ -329,19 +334,29 @@ def N_scaling_degree_distribution(dataset_name = 'dataset', N_space = [1e4], N_m
             k_max_std_array.append(np.std(cur_k_max_array[N_i]))
     
     # We now save the res_array into a txt file
-    save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, bin_scale, N_space, k_max_avg_array, k_max_std_array, res_array)
+    save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, r, bin_scale, N_space, k_max_avg_array, k_max_std_array, res_array)
     return(k_max_avg_array, k_max_std_array,res_array)
 
 # -----------------------------------------------------------
 # ------------------ Filestream functions -------------------
 # -----------------------------------------------------------
 
-def save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space, N_max_space, res_array):
+def encode_PS(PS):
+    if type(PS) == list:
+        return("_".join(PS))
+    return(PS)
+def decode_PS(PS):
+    if "_" in PS:
+        return PS.split("_")
+    return(PS)
+
+def save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array):
     """
     The file has the form:
         1 [PS, N_m, bin_scale]
         2 [m1, m2, m3...]
-        3 [N_max1, N_max2, N_max3...]
+        3 [r1, r2, r3...]
+        4 [N_max1, N_max2, N_max3...]
         Then for each m_val, there are 6 rows:
             1 [x]
             2 [y_PDF]
@@ -350,10 +365,12 @@ def save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space
             5 [y_counts_std]
             5 [binedges]
     """
+    PS_encoded = encode_PS(PS)
     output_delim = ', '
-    m_scaling_degree_distribution_output_file = open("data/m_k_scaling_" + PS + "_" + dataset_name + ".txt", mode="w")
-    m_scaling_degree_distribution_output_file.write(f'{PS}, {N_m}, {bin_scale}\n')
+    m_scaling_degree_distribution_output_file = open("data/m_k_scaling_" + PS_encoded + "_" + dataset_name + ".txt", mode="w")
+    m_scaling_degree_distribution_output_file.write(f'{PS_encoded}, {N_m}, {bin_scale}\n')
     m_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in m_space]) + '\n')
+    m_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in r_space]) + '\n')
     m_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in N_max_space]) + '\n')
     for m_i in range(len(m_space)):
         for res_i in range(len(res_array[m_i])):
@@ -361,10 +378,10 @@ def save_m_scaling_degree_distribution(dataset_name, PS, N_m, bin_scale, m_space
     m_scaling_degree_distribution_output_file.close()
 
 
-def save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, bin_scale, N_max_space, k_max_avg_array, k_max_std_array, res_array):
+def save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, r, bin_scale, N_max_space, k_max_avg_array, k_max_std_array, res_array):
     """
     The file has the form:
-        1 [PS, N_m, m, bin_scale]
+        1 [PS, N_m, m, r, bin_scale]
         2 [N_max1, N_max2, N_max3...]
         3 [k_max1, k_max2, k_max3...]
         4 [k_max_std1, k_max_std2, k_max_std3...]
@@ -376,9 +393,10 @@ def save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, bin_scale, N_ma
             5 [y_counts_std]
             5 [binedges]
     """
+    PS_encoded = encode_PS(PS)
     output_delim = ', '
-    N_scaling_degree_distribution_output_file = open("data/N_k_scaling_" + PS + "_" + dataset_name + ".txt", mode="w")
-    N_scaling_degree_distribution_output_file.write(f'{PS}, {N_m}, {m}, {bin_scale}\n')
+    N_scaling_degree_distribution_output_file = open("data/N_k_scaling_" + PS_encoded + "_" + dataset_name + ".txt", mode="w")
+    N_scaling_degree_distribution_output_file.write(f'{PS_encoded}, {N_m}, {m}, {r}, {bin_scale}\n')
     N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in N_max_space]) + '\n')
     N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in k_max_avg_array]) + '\n')
     N_scaling_degree_distribution_output_file.write(output_delim.join([str(elem) for elem in k_max_std_array]) + '\n')
@@ -390,7 +408,7 @@ def save_N_scaling_degree_distribution(dataset_name, PS, N_m, m, bin_scale, N_ma
 def load_m_scaling_degree_distribution(dataset_name, keep_descriptors = False):
     
     # Input file configuration parameters
-    head_line_number = 3
+    head_line_number = 4
     line_number_per_m_val = 6
     data_line_types = [float, float, float, float, float, int]
     
@@ -402,12 +420,13 @@ def load_m_scaling_degree_distribution(dataset_name, keep_descriptors = False):
     #data_lines = [[float(elem) for elem in item.split(", ")] for item in input_lines[head_line_number:]]
     data_lines = [item.split(", ") for item in input_lines[head_line_number:]]
     
-    PS = head_lines[0][0]
+    PS = decode_PS(head_lines[0][0])
     N_m = int(head_lines[0][1])
     bin_scale = float(head_lines[0][2])
     
     m_space = [int(elem) for elem in head_lines[1]]
-    N_max_space = [float(elem) for elem in head_lines[2]]
+    r_space = [int(elem) for elem in head_lines[2]]
+    N_max_space = [float(elem) for elem in head_lines[3]]
     
     
     res_array = []
@@ -425,7 +444,7 @@ def load_m_scaling_degree_distribution(dataset_name, keep_descriptors = False):
     print(f"Probability strategy: {PS}; Number of repetitions per datapoint = {N_m}; Bin scale = {bin_scale}")
     print(f"m_space = {m_space}; N_max_space = {N_max_space}")
     if keep_descriptors:
-        return(PS, N_m, bin_scale, m_space, N_max_space, res_array)
+        return(PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array)
     return(res_array)
 
 def load_N_scaling_degree_distribution(dataset_name, keep_descriptors = False):
@@ -443,10 +462,11 @@ def load_N_scaling_degree_distribution(dataset_name, keep_descriptors = False):
     #data_lines = [[float(elem) for elem in item.split(", ")] for item in input_lines[head_line_number:]]
     data_lines = [item.split(", ") for item in input_lines[head_line_number:]]
     
-    PS = head_lines[0][0]
+    PS = decode_PS(head_lines[0][0])
     N_m = int(head_lines[0][1])
     m = int(head_lines[0][2])
-    bin_scale = float(head_lines[0][3])
+    r = int(head_lines[0][3])
+    bin_scale = float(head_lines[0][4])
     
     N_max_space = [float(elem) for elem in head_lines[1]]
     
@@ -469,7 +489,7 @@ def load_N_scaling_degree_distribution(dataset_name, keep_descriptors = False):
     print(f"Probability strategy: {PS}; Number of repetitions per datapoint = {N_m}; m = {m}; Bin scale = {bin_scale}")
     print(f"N_max_space = {N_max_space}")
     if keep_descriptors:
-        return(PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array)
+        return(PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array)
     return(k_max_avg_array, k_max_std_array, res_array)
 
 def combine_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
@@ -518,68 +538,72 @@ def combine_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
         ds_out = "COMBINED_" + ds1 + "_" + ds2
     
     if which_scaling.lower() == 'm':
-        PS1, N_m1, bin_scale1, m_space1, N_max_space1, res_array1 = load_m_scaling_degree_distribution(PS + "_" + ds1, keep_descriptors = True)
-        PS2, N_m2, bin_scale2, m_space2, N_max_space2, res_array2 = load_m_scaling_degree_distribution(PS + "_" + ds2, keep_descriptors = True)
+        PS1, N_m1, bin_scale1, m_space1, r_space1, N_max_space1, res_array1 = load_m_scaling_degree_distribution(PS + "_" + ds1, keep_descriptors = True)
+        PS2, N_m2, bin_scale2, m_space2, r_space2, N_max_space2, res_array2 = load_m_scaling_degree_distribution(PS + "_" + ds2, keep_descriptors = True)
         
-        if bin_scale1 != bin_scale2 or m_space1 != m_space2 or N_max_space1 != N_max_space2:
+        if bin_scale1 != bin_scale2 or m_space1 != m_space2 or r_space1 != r_space2 or N_max_space1 != N_max_space2:
             print(f"ERROR: Datasets '{ds1}' and '{ds2}' found incompatible!")
             return(-1)
         N_m3 = N_m1 + N_m2
         bin_scale3 = bin_scale1
         m_space3 = m_space1
+        r_space3 = r_space1
         N_max_space3 = N_max_space1
         res_array3 = combine_res_arrays(res_array1, res_array2, N_m1, N_m2, len(N_max_space3))
         
-        save_m_scaling_degree_distribution(ds_out, PS, N_m3, bin_scale3, m_space3, N_max_space3, res_array3)
-        return(PS, N_m3, bin_scale3, m_space3, N_max_space3, res_array3)
+        save_m_scaling_degree_distribution(ds_out, PS, N_m3, bin_scale3, m_space3, r_space3, N_max_space3, res_array3)
+        return(PS, N_m3, bin_scale3, m_space3, r_space3, N_max_space3, res_array3)
         
         
     if which_scaling.lower() == 'n':
-        PS1, N_m1, bin_scale1, m1, N_max_space1, k_max_avg_array1, k_max_std_array1, res_array1 = load_N_scaling_degree_distribution(PS + "_" + ds1, keep_descriptors = True)
-        PS2, N_m2, bin_scale2, m2, N_max_space2, k_max_avg_array2, k_max_std_array2, res_array2 = load_N_scaling_degree_distribution(PS + "_" + ds2, keep_descriptors = True)
+        PS1, N_m1, bin_scale1, m1, r1, N_max_space1, k_max_avg_array1, k_max_std_array1, res_array1 = load_N_scaling_degree_distribution(encode_PS(PS) + "_" + ds1, keep_descriptors = True)
+        PS2, N_m2, bin_scale2, m2, r2, N_max_space2, k_max_avg_array2, k_max_std_array2, res_array2 = load_N_scaling_degree_distribution(encode_PS(PS) + "_" + ds2, keep_descriptors = True)
         
-        if bin_scale1 != bin_scale2 or m1 != m2 or N_max_space1 != N_max_space2:
+        if bin_scale1 != bin_scale2 or m1 != m2 or r1 != r2 or N_max_space1 != N_max_space2:
             print(f"ERROR: Datasets '{ds1}' and '{ds2}' found incompatible!")
             return(-1)
         
         N_m3 = N_m1 + N_m2
         m3 = m1
+        r3 = m1
         bin_scale3 = bin_scale1
         N_max_space3 = N_max_space1
-        #k_max_avg_array3 = (N_m1 * k_max_avg_array1 + N_m2 * k_max_avg_array2) / N_m3
-        #k_max_std_array3 = np.sqrt(N_m1 * N_m1 * k_max_std_array1 * k_max_std_array1 + N_m2 * N_m2 * k_max_std_array2 * k_max_std_array2) / N_m3
         k_max_avg_array3, k_max_std_array3 = weighted_mean(k_max_avg_array1, k_max_std_array1, k_max_avg_array2, k_max_std_array2, N_m1, N_m2)
         res_array3 = combine_res_arrays(res_array1, res_array2, N_m1, N_m2, len(N_max_space3))
         
-        save_N_scaling_degree_distribution(ds_out, PS, N_m3, m3, bin_scale3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
-        return(PS, N_m3, bin_scale3, m3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
+        save_N_scaling_degree_distribution(ds_out, PS, N_m3, m3, r3, bin_scale3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
+        return(PS, N_m3, bin_scale3, m3, r3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
         
 
 # -----------------------------------------------------------
 # ----------- Theoretical prediction functions --------------
 # -----------------------------------------------------------
 
-def p_infty(k, m, PS = 'PA'):
+def p_infty(k, m, r, PS = 'PA'):
     if PS == 'PA':
         return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))
     if PS == 'RA':
         return(np.power(m / (m + 1.0), k - m) / (m + 1.0))
+    if PS == ['RA', 'PA']:
+        return(np.power(k + r * m / (m - r), - (2.0 * m - r) / (m - r)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)))
 
-def primitive_function_gamma_p_infty(k, m, PS = 'PA'):
+def primitive_function_p_infty(k, m, r, PS = 'PA'):
     # This is the promitive function of theoretical_gamma_p_infty(k, m)
     if PS == 'PA':
         return(m * (m + 1.0) * (np.log(k) - 2.0 * np.log(k + 1.0) + np.log(k + 2.0)))
     if PS == 'RA':
         return(np.power(m / (m + 1.0), k - m) / ((m + 1.0) * np.log(m / (m + 1.0))))
+    if PS == ['RA', 'PA']:
+        return(- ((m - r) / m) * np.power(k + r * m / (m - r), -m / (m - r)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r))) #TODO
 
-def expected_frequency_p_infty(k, m):
+"""def expected_frequency_p_infty(k, m):
     # this is a discrete version of theoretical_gamma_p_infty
     if k == m:
         return(2.0 / (m + 2.0))
     else:
-        return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))
+        return((2.0 * m * (m + 1.0)) / (k * (k + 1.0) * (k + 2.0)))"""
 
-def expected_bin_frequency_p_infty(m, k_min, k_max = -1, PS = 'PA'):
+def expected_bin_frequency_p_infty(m, r, k_min, k_max = -1, PS = 'PA'):
     # counts the theoretical frequency for k_min <= k < k_max
     # if k_max == -1, it is interpreted as infinity
     if PS == 'PA':
@@ -587,24 +611,29 @@ def expected_bin_frequency_p_infty(m, k_min, k_max = -1, PS = 'PA'):
             return(m * (m + 1.0) / (k_min * (k_min + 1.0)))
         return(m * (m + 1.0) * (k_max * (k_max + 1.0) - k_min * (k_min + 1.0)) / (k_max * (k_max + 1.0) * k_min * (k_min + 1.0)))
     if PS == 'RA':
-        r = m / (m + 1.0)
+        power_base = m / (m + 1.0)
         if k_max == -1:
-            return(np.power(r, k_min - m))
-        return(np.power(r, k_min - m) - np.power(r, k_max - m))
-def theoretical_binned_p_infty(bin_edges, m, PS = 'PA'):
+            return(np.power(power_base, k_min - m))
+        return(np.power(power_base, k_min - m) - np.power(power_base, k_max - m))
+    if PS == ['RA', 'PA']:
+        
+        if k_max == -1:
+            return( sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
+        return( (sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) - sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_max)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) ) #TODO
+def theoretical_binned_p_infty(bin_edges, m, r, PS = 'PA'):
     # This calculates the expected normalized AND unnormalized binned distribution of the gamma func. p_infty function
     # y[i] = (bin_edges[i+1] - bin_edges[i])^-1 * \int_{bin_edges[i]}^{bin_edges[i+1]} f(k) dk
     
     #if PS == 'PA':
-    y_PDF = (primitive_function_gamma_p_infty(bin_edges[1:], m, PS) - primitive_function_gamma_p_infty(bin_edges[:-1], m, PS)) / (bin_edges[1:] - bin_edges[:-1])
+    y_PDF = (primitive_function_p_infty(bin_edges[1:], m, r, PS) - primitive_function_p_infty(bin_edges[:-1], m, r, PS)) / (bin_edges[1:] - bin_edges[:-1])
     y_counts = np.zeros(len(bin_edges)-1)
     for i in range(len(bin_edges)-1):
-        y_counts[i] = expected_bin_frequency_p_infty(m, bin_edges[i], bin_edges[i+1], PS)
+        y_counts[i] = expected_bin_frequency_p_infty(m, r, bin_edges[i], bin_edges[i+1], PS)
     #elif PS == 'RA':
         
     """for i in range(len(bin_edges)-2):
-        y_counts[i] = expected_bin_frequency_p_infty(m, bin_edges[i], bin_edges[i+1])
-    y_counts[-1] = expected_bin_frequency_p_infty(m, bin_edges[-2], -1)"""
+        y_counts[i] = expected_bin_frequency_p_infty(m, r, bin_edges[i], bin_edges[i+1])
+    y_counts[-1] = expected_bin_frequency_p_infty(m, r, bin_edges[-2], -1)"""
     return(y_PDF, y_counts)
     # note that neither of these is normalized - the PDF is non-negligible even for bins outside of the bin_edges scope
 
@@ -637,7 +666,7 @@ def weighted_chi_sq(y_measurement, y_prediction, y_std):
       chi_sq = np.sum( ((y_measurement-y_prediction)/y_std)**2/y_prediction )  
       return(chi_sq)
 
-def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, min_bin_count = 5, PS = 'PA'):
+def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, r_val, min_bin_count = 5, PS = 'PA'):
     print("  Sanitizing the fat-tail bins by combining them from the right until the minimum value isn't smaller than", min_bin_count)
     cum_bin_count = 0
     cutoff_index = len(bincounts)
@@ -649,15 +678,15 @@ def sanitize_fat_tail(bincounts, binedges, theoretical_binned_frequency, m_val, 
         cum_bin_count += bincounts[cutoff_index]
     if cum_bin_count == 0:
         print("  LOG: All bins satisfied the min_bin_count condition already; no sanitization occurred")
-        return(bincounts, binedges, np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_val, max(binedges), PS=PS)])))
+        return(bincounts, binedges, np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_val, r_val, max(binedges), PS=PS)])))
     new_bincounts = np.concatenate((bincounts[:cutoff_index], [cum_bin_count]))
     new_binedges = binedges.copy()[:cutoff_index+1] #this implies an 'infinity' as a final entry, which we don't include, ofc
     # NOTE the goodness-of-fit doesn't actually take into account the x-position of the stuff. That's okay i guess. Well it does in the sense the theoretical prediction is an x sum
-    new_theoretical_binned_frequency = np.concatenate((theoretical_binned_frequency[:cutoff_index], [expected_bin_frequency_p_infty(m_val,new_binedges[-1], PS = PS)]))
+    new_theoretical_binned_frequency = np.concatenate((theoretical_binned_frequency[:cutoff_index], [expected_bin_frequency_p_infty(m_val, r_val,new_binedges[-1], PS = PS)]))
     print(f'  LOG: {len(bincounts) - cutoff_index} bins in the fat tail combined; new minimum bincount is {int(min(new_bincounts))}')
     return(new_bincounts, new_binedges, new_theoretical_binned_frequency)
 
-def k_degree_distribution_analysis(PS, N_m, m_space, N_max, res_array):
+def k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max, res_array):
     
     # res_array obtained either by m_scaling_degree_distribution or by load_m_scaling_degree_distribution
     
@@ -694,7 +723,7 @@ def k_degree_distribution_analysis(PS, N_m, m_space, N_max, res_array):
         
         
         # Pearson's chi-squared test
-        theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m_space[m_i], PS = PS)
+        theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m_space[m_i], r_space[m_i], PS = PS)
         print("  Sum of theoretical binned frequency counts =", sum(theoretical_binned_frequency))
         
         # theoretical distribution is normalized on m <= k <= infty, but in the measurement we have the N_max limitation, which
@@ -704,7 +733,7 @@ def k_degree_distribution_analysis(PS, N_m, m_space, N_max, res_array):
         #theoretical_binned_frequency_with_infinity = np.concatenate((theoretical_binned_frequency[:-1], [theoretical_binned_frequency[-1] + expected_bin_frequency_p_infty(m_space[m_i], max(binedges))]))
         #y_counts_with_infinity = y_counts.copy()#np.concatenate((y_counts, [0.0]))
         #NOTE we now do the "cumulative infinity binning"
-        y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m_space[m_i], PS=PS)
+        y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m_space[m_i], r_space[m_i], PS=PS)
         print("  sum of theoretical binned frequency INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
         
         # BUT pearson is invalid for bins with counts smaller than 5, so we cannot include the infinity bin
@@ -783,10 +812,12 @@ def k_degree_distribution_analysis(PS, N_m, m_space, N_max, res_array):
     plt.tight_layout()
     plt.show()
 
-def k_max_analysis(PS, N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = False):
+def k_max_analysis(PS, N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = False):
     
     if type(m) == list:
         m = m[0]
+    if type(r) == list:
+        r = r[0]
     """for N_i in range(len(N_space)):
         x, y = logbin(res_array[N_i])
         fit_x_space = np.linspace(min(x), max(x))
@@ -827,7 +858,7 @@ def k_max_analysis(PS, N_m, N_space, m, k_max_avg_array, k_max_std_array,res_arr
         x, y_PDF, y_PDF_err, y_counts, y_counts_err, binedges = res_array[N_i]
         
         
-        #theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m)
+        #theoretical_binned_distribution, theoretical_binned_frequency = theoretical_binned_p_infty(binedges, m, r)
         #print("  Sum of theoretical binned frequency counts =", sum(theoretical_binned_frequency))
         #y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m)
         #print("  sum of theoretical binned frequency INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
@@ -845,7 +876,7 @@ def k_max_analysis(PS, N_m, N_space, m, k_max_avg_array, k_max_std_array,res_arr
         xerr_right_nonzero = xerr_right[y_PDF!=0]
         
         x_factor = 1.0 / theoretical_k_max_avg[N_i] # shouldn't this be the EXPERIMENTAL k_max??
-        y_factor = 1.0 / p_infty(x, m, PS=PS)#x_nonzero * (x_nonzero + 1.0) * (x_nonzero + 2.0) / (2.0 * m * (m + 1.0))
+        y_factor = 1.0 / p_infty(x, m, r, PS=PS)#x_nonzero * (x_nonzero + 1.0) * (x_nonzero + 2.0) / (2.0 * m * (m + 1.0))
         
         x_collapsed = x * x_factor
         y_collapsed = y_PDF * y_factor
@@ -869,13 +900,13 @@ def task1_3(new_dataset_name, m_space = [1, 3, 5], N_max = [5e4, 1e5, 2e5], N_m 
     
     if type(N_max) != list:
         N_max = [N_max] * len(m_space)
-    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, N_m=N_m, PS = 'PA', N_max = N_max, bin_scale = 1.3)
-    k_degree_distribution_analysis('PA', N_m, m_space, N_max, res_array)
+    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, m_space, N_m=N_m, PS = 'PA', N_max = N_max, bin_scale = 1.3)
+    k_degree_distribution_analysis('PA', N_m, m_space, m_space, N_max, res_array)
 
 def task1_3_load(dataset_name):
     
-    PS, N_m, bin_scale, m_space, N_max_space, res_array = load_m_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
-    k_degree_distribution_analysis(PS, N_m, m_space, N_max_space, res_array)
+    PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = load_m_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
+    k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
 def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 1e5]):
     
@@ -921,34 +952,46 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
 def task1_4(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3):
     
     k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'PA', bin_scale = 1.3)
-    k_max_analysis('PA', N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array)
+    k_max_analysis('PA', N_m, N_space, m, m, k_max_avg_array, k_max_std_array,res_array)
 
 def task1_4_load(dataset_name):
     
-    PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
-    k_max_analysis(PS, N_m, N_max_space, m, k_max_avg_array, k_max_std_array, res_array)
+    PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
+    k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
 
 def task2_1(new_dataset_name, m_space = [1, 3, 5], N_max = [5e3, 1e4, 2e4], N_m = 1):
     
     if type(N_max) != list:
         N_max = [N_max] * len(m_space)
     res_array = m_scaling_degree_distribution(new_dataset_name, m_space, N_m=N_m, PS = 'RA', N_max = N_max, bin_scale = 1.3)
-    k_degree_distribution_analysis('RA', N_m, m_space, N_max, res_array)
+    k_degree_distribution_analysis('RA', N_m, m_space, m_space, N_max, res_array)
 
 def task2_1_load(dataset_name):
     
-    PS, N_m, bin_scale, m_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
-    k_degree_distribution_analysis(PS, N_m, m_space, N_max_space, res_array)
+    PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
+    k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
 def task2_2(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3, plot_measured_k_max = False):
     
     k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'RA', bin_scale = 1.3)
-    k_max_analysis('RA', N_m, N_space, m, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = plot_measured_k_max)
+    k_max_analysis('RA', N_m, N_space, m, m, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = plot_measured_k_max)
 
 def task2_2_load(dataset_name, plot_measured_k_max = False):
     
-    PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
-    k_max_analysis(PS, N_m, N_max_space, m, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
+    PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('RA_' + dataset_name, keep_descriptors = True)
+    k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
+
+def task3_1(new_dataset_name, m_space = [3, 6], r_space = [1, 2], N_max = [5e3, 1e4], N_m = 1):
+    
+    if type(N_max) != list:
+        N_max = [N_max] * len(m_space)
+    res_array = m_scaling_degree_distribution(new_dataset_name, m_space, r_space, N_m=N_m, PS = ['RA', 'PA'], N_max = N_max, bin_scale = 1.3)
+    k_degree_distribution_analysis(['RA', 'PA'], N_m, m_space, r_space, N_max, res_array)
+
+def task3_1_load(dataset_name):
+    
+    PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_PA_' + dataset_name, keep_descriptors = True)
+    k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
 #task1_3_load('1_3_5_big')
 #task1_4_expected_k_max()
@@ -959,9 +1002,15 @@ def task2_2_load(dataset_name, plot_measured_k_max = False):
 #task2_2("megakek", [2e3, 5e3, 1e4], N_m = 5)
 #task2_2_load("megakek", plot_measured_k_max = True)
 
-#PS, N_m, bin_scale, m, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_first_second', 'third', 'N', PS = 'PA')
-#k_max_analysis(PS, N_m, N_max_space, m, k_max_avg_array, k_max_std_array, res_array)
+#task3_1("EVM_testicek", [3], [1], [5e3])
+#task3_1_load("EVM_testicek")
+
+PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('first', 'third', 'N', PS = 'PA')
+k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
 
 
-EVM_jebak = EVM_network()
+#EVM_jebak = BA_network(m = 3, probability_strategy = ['RA','PA'], r = 1)
+#EVM_jebak.initial_graph('regular', N=10, param = EVM_jebak.m)
+#EVM_jebak.step()
+#print(EVM_jebak)
 
