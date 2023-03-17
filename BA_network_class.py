@@ -111,7 +111,7 @@ class BA_network():
         self.adjacency_list[j].append(i)
         
         # Update the probability weights if necessary
-        if type(self.probability_strategy == list):
+        if type(self.probability_strategy) == list:
             delta_pi = np.array([int(elem=='PA') for elem in self.probability_strategy])
         elif self.probability_strategy == 'PA':
             delta_pi = 1.0

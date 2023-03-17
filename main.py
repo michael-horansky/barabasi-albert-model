@@ -594,7 +594,8 @@ def primitive_function_p_infty(k, m, r, PS = 'PA'):
     if PS == 'RA':
         return(np.power(m / (m + 1.0), k - m) / ((m + 1.0) * np.log(m / (m + 1.0))))
     if PS == ['RA', 'PA']:
-        return(- ((m - r) / m) * np.power(k + r * m / (m - r), -m / (m - r)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r))) #TODO
+        #return(- ((m - r) / m) * np.power(k + r * m / (m - r), -m / (m - r)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)))
+        return(- ((m - r) / m) * np.power(k + r * m / (m - r), -m / (m - r)) * (m / (m - r)) * np.power(r * (2.0 * m - r) / (m - r), m / (m - r)))
 
 """def expected_frequency_p_infty(k, m):
     # this is a discrete version of theoretical_gamma_p_infty
@@ -619,7 +620,7 @@ def expected_bin_frequency_p_infty(m, r, k_min, k_max = -1, PS = 'PA'):
         
         if k_max == -1:
             return( sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
-        return( (sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) - sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_max)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) ) #TODO
+        return( (sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) - sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_max)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
 def theoretical_binned_p_infty(bin_edges, m, r, PS = 'PA'):
     # This calculates the expected normalized AND unnormalized binned distribution of the gamma func. p_infty function
     # y[i] = (bin_edges[i+1] - bin_edges[i])^-1 * \int_{bin_edges[i]}^{bin_edges[i+1]} f(k) dk
@@ -995,18 +996,18 @@ def task3_1_load(dataset_name):
 
 #task1_3_load('1_3_5_big')
 #task1_4_expected_k_max()
-#task1_4('third', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
+#task1_4('fourth', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
 #task1_4_load('COMBINED_COMBINED_first_second_third')
 
 #task2_1_load('testicek')
 #task2_2("megakek", [2e3, 5e3, 1e4], N_m = 5)
 #task2_2_load("megakek", plot_measured_k_max = True)
 
-#task3_1("EVM_testicek", [3], [1], [5e3])
+#task3_1("EVM_2", [6], [2], [2e5])
 #task3_1_load("EVM_testicek")
 
-PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('first', 'third', 'N', PS = 'PA')
-k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
+#PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_COMBINED_first_second_third', 'fourth', 'N', PS = 'PA')
+#k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
 
 
 #EVM_jebak = BA_network(m = 3, probability_strategy = ['RA','PA'], r = 1)
