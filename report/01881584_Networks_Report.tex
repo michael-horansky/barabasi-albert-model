@@ -11,6 +11,7 @@
 %
 % --- graphicx
 \usepackage{graphicx}
+\usepackage{amssymb}
 % This is the main one used to read in images.  ESSENTIAL
 %
 % I DO NOT recommend you try anything else.  Messing around with inages in LaTeX is a pain.
@@ -31,7 +32,7 @@
 
 % *** HYPERLINKS
 %
-%\usepackage{hyperref}
+\usepackage{hyperref}
 %
 % See http://en.wikibooks.org/wiki/LaTeX/Hyperlinks
 % or hyperref manual.  Main LaTeX reference systems automatically made into hyperlinks in pdf document.
@@ -71,7 +72,7 @@
 \renewcommand{\qmarks}[1]{\addtocounter{nmarks}{#1} \hspace*{\fill} [\textbf{#1~marks}]}
 \renewcommand{\totalmarks}{\hspace*{\fill} [\textbf{Total~\arabic{nmarks}~marks}]}
 
-
+\usepackage{physics}
 
 % Optional, example given here for simple headers
 %\pagestyle{myheadings}
@@ -153,7 +154,9 @@ Describe how you implemented the BA model numerically. \qmarks{3} %(2010 3 marks
 
 % ..............................................
 \subsubsection{Initial Graph}
-What type of initial graph do you use and why? \qmarks{3} %(2010 3 marks?)
+What type of initial graph do you use and why? \qmarks{3}
+
+Tdddd therefore for our system, $p(k<m,t)=n(k<m,t)=0$ (the \textit{lowest degree condition}).
 
 % ..............................................
 \subsubsection{Type of Graph}
@@ -177,11 +180,73 @@ Describe the parameters your programme needs, the values you chose, and why. \qm
 \subsubsection{Theoretical Derivation}
 Give your best theoretical derivation for the form of the degree distribution $p(k)$ in the long-time limit for Preferential Attachment (PA) in the BA model. \qmarks{4}
 
+\hfill\\
+Let $t$ be the number of vertices added to the initial graph (aka time), $N(t)=N_0+t$ be the number of vertices, $E(t)=E_0 + mt$ be the number of edges, $p(k, t)$ be the probability that a random vertex has degree $k$, and $n(k, t)=N(t)p(k,t)$ be the expected number of vertices with degree $k$. Then, in each step, for each degree value $k$, the expected number of vertices with that degree that has a new edge connected to them is $m\Pi(k,t)n(k,t)$. Also, in each step, one vertex with degree $m$ is being added. Hence we can describe how the \textit{expected} number of vertices of a certain degree changes in each iteration:
+\begin{equation} \label{MasterEquation}
+n(k, t+1) = n(k, t) + m \left[\Pi(k-1,t)n(k-1,t) - \Pi(k,t)n(k,t)\right] + \delta_{k,m}
+\end{equation}
+We can express \ref{MasterEquation} with $p(k,t)$ and $N(t)$:
+\begin{eqnarray*}
+N(t+1)p(k, t+1) &=& N(t)p(k, t) + mN(t) \left[\Pi(k-1,t)p(k-1,t) - \Pi(k,t)p(k,t)\right] + \delta_{k,m}
+\end{eqnarray*}
+Consider the limit
+$$\lim_{t\to\infty} p(k,t)\equiv p_\infty (k)$$
+In this limit, the probability distribution function of the degrees should stay constant, and is given by the equation
+\begin{equation} \label{MasterEquationLimit}
+p_\infty(k) = \lim_{t\to\infty} m \left[N(t)\Pi(k-1,t)p_\infty(k-1) - N(t)\Pi(k,t)p_\infty(k)\right] + \delta_{k,m}
+\end{equation}
+Up until this point, the shape of $\Pi(k,t)$ could be anything. Here, to solve this equation, we apply the Preferential Attachment model, which requires $\Pi(k,t)\propto k$. Writing this as $\Pi(k,t)=c(t)k$, we now require $\Pi$ to be normalized and hence find $c(t)$:
+\begin{eqnarray*}
+\sum_{i\in\mathrm{vertices}} \Pi(k_i,t)&=&1\\
+c(t) \sum_{i\in\mathrm{vertices}} k&=&1\\
+c(t) \cdot 2E(t)&=&1\\
+\Pi(k,t) &=& \frac{k}{2E(t)}
+\end{eqnarray*}
+Now: we want to calculate the following limit:
+$$\lim_{t\to\infty}\frac{N(t)}{E(t)}=\lim_{t\to\infty}\frac{N_0+t}{E_0+mt}=\frac{1}{m}$$
+Plugging these two results into \ref{MasterEquationLimit}, we obtain
+\begin{equation} \label{MasterEquationLimitPA}
+p_\infty(k) = \frac{1}{2}\left[(k-1)p_\infty(k-1) - kp_\infty(k)\right] + \delta_{k,m}
+\end{equation}
+First, we consider the case $k>m$. To solve this, we rearrange as
+$$\frac{p_\infty(k)}{p_\infty(k-1)}=\frac{k-1}{k+2}$$
+and note that if we make $p_\infty(k)$ proportional to $\left[k(k+1)(k+2)\right]^{-1}$, then $p_\infty(k-1)$ will be proportional to this sequence `shifted' -- ergo $p_\infty(k-1)\propto \left[(k-1)k(k+1)\right]^{-1}$ -- and their ratio is then exactly what's required. Therefore
+$$p_\infty(k)=\frac{A}{k(k+1)(k+2)}\qq{when} k>m$$
+Now we consider the case $k=m$. Applying the lowest degree condition yields the equation
+$$p_\infty(m)=-\frac{m}{2}p_\infty(m)+1$$
+Hence
+$$p_\infty(m)=\frac{2}{m+2}$$
+We now determine the constant $A$ by considering:
+\begin{eqnarray*}
+\frac{p_\infty(m+1)}{p_\infty(m)}&=&\frac{m}{m+3}\\
+\frac{m+2}{2}\frac{A}{(m+1)(m+2)(m+3)}&=&\frac{m}{m+3}\\
+A&=&2m(m+1)
+\end{eqnarray*}
+When we plug this into $p_\infty(k)$, we see that setting $k=m$ yields exactly $\frac{2}{m+2}$, so we can write the result as
+\begin{equation} \label{PAprob}
+p_\infty(k)=\begin{cases}
+\frac{2m(m+1)}{k(k+1)(k+2)} & k\geq m\\
+0 & \mathrm{otherwise}
+\end{cases}
+\end{equation}
+
 % ..............................................
 \subsubsection{Theoretical Checks}
 Check your approximate theoretical solution for $p(k)$ has the correct properties. \qmarks{4}
 
-
+\hfill\\
+In our derivation of $p_\infty(k)$, we never once used the fact that it must be normalized to $1$, since it's a probability distribution function. We have to check if this is true:
+\begin{eqnarray*}
+\sum_{k=m}^\infty p_\infty(k) &=& 2m(m+1)\sum_{k=m}^\infty \frac{1}{k(k+1)(k+2)}\\
+&=& 2m(m+1)\sum_{k=m}^\infty \left[ \frac{1}{2}\frac{1}{k} - \frac{1}{k+1} + \frac{1}{2} \frac{1}{k+2} \right]\\
+&=& 2m(m+1)\left( \frac{1}{2}\left(\frac{1}{m}+\frac{1}{m+1}\right) + \sum_{k=m}^\infty \left[\frac{1}{k+2}-\frac{1}{k+1} \right] \right)
+\end{eqnarray*}
+We recognize that the series on the right side is telescoping, hence we have
+\begin{eqnarray*}
+&=&2m(m+1)\left( \frac{2m+1}{2m(m+1)} - \frac{1}{m+1} + \lim_{k\to\infty} \frac{1}{k+2} \right)\\
+&=&2m(m+1)\left( \frac{1}{2m(m+1)} \right)\\
+\sum_{k=m}^\infty p_\infty(k) &=&  1
+\end{eqnarray*}
 
 
 % ---------------------------------------------
@@ -234,6 +299,35 @@ Illustrate the finite size effects by studying a single value of $m$ (justify yo
 % ..............................................
 \subsubsection{Degree Distribution Theory}
 Give your best theoretical derivation for the form of the degree distribution in the long-time limit. Check your approximate theoretical solution has the correct properties. \qmarks{4}
+
+\hfill\\
+For this model, we can use the same equation \ref{MasterEquationLimit} as for preferential attachment, we'll just use different $\Pi(k,t)$. Namely, in the random attachment model, every vertex has the same selection probability as any other. Hence
+$$\Pi_{\mathrm{RA}}(k,t)=\frac{1}{N(t)}$$
+This means our governing equation is
+\begin{equation} \label{MasterEquationLimitRA}
+p_\infty(k)= m\left[ p_\infty(k-1)-p_\infty(k) \right] + \delta_{k,m}
+\end{equation}
+Hence for $k=m$, using the lowest degree condition:
+$$p_\infty(m)=\frac{1}{1+m}$$
+And for $k>m$:
+$$p_\infty(k)=\frac{m}{m+1}p_\infty(k-1)$$
+By induction, we obtain
+$$p_\infty(k)=\left(\frac{m}{m+1}\right)^{k-m}p_\infty(m)=\frac{1}{m+1}\left(\frac{m}{m+1}\right)^{k-m}$$
+Hence the degree probability distribution function in this model is
+\begin{equation} \label{RAprob}
+p_\infty(k)=\begin{cases}
+\frac{1}{m+1}\left(\frac{m}{m+1}\right)^{k-m} & k\geq m\\
+0 & \mathrm{otherwise}
+\end{cases}
+\end{equation}
+We need to check if this is normalized:
+\begin{eqnarray*}
+\sum_{k=m}^\infty p_\infty(k)&=&\frac{1}{m+1} \sum_{k=m}^\infty \left(\frac{m}{m+1}\right)^{k-m}\\
+&=&\frac{1}{m+1} \sum_{x=0}^\infty \left(\frac{m}{m+1}\right)^x\\
+&=&\frac{1}{m+1} \cdot \frac{1}{1-\frac{m}{m+1}}\\
+&=& 1
+\end{eqnarray*}
+Therefore $p_\infty(k)$ is normalized. We see that, rather than a power law like in the preferential attachment model, the probability distribution for the random attachement model is governed by exponential decay.
 
 % ..............................................
 \subsubsection{Largest Degree Theory}
@@ -302,6 +396,57 @@ Study of the behaviour of $k_1$ as $N$ is varied for one sensible fixed value of
 \subsection{Existing Vertices Model Theoretical Derivations}
 
 Give your best theoretical derivation for the form of the degree distribution in the long-time limit for the specific scenario given, namely where some edges added run between exiting vertices while the rest are between the new vertex and one existing vertex as before. Check your solution. \qmarks{8}
+
+\hfill\\
+Here, we need to alter the equation \ref{MasterEquation}, since there are more ways the number of vertices with a specific edge can change. Namely, in each step, $r$ edges are added to the system from the new vertex to $r$ existing vertices using PDF $\Pi_1(k,t)$ and $(m-r)$ edges are added between existing vertices using PDF $\Pi_2(k,t)$. The first part can be interpreted the same way as the previous two models, with the number of vertices with changing $k$ being $r$ rather than $m$; the second part can be as well, except the number of vertices changing $k$ is $2(m-r)$, and there will be no Kronecker delta term, since no new vertex is being added. Hence the new governing equation is
+\begin{multline} \label{MasterEquationEVM}
+n(k,t+1)= n(k,t)+r\left[\Pi_1(k-1,t)n(k-1,t)-\Pi_1(k,t)n(k,t)\right] \\
++2(m-r)\left[\Pi_2(k-1,t)n(k-1,t)-\Pi_2(k,t)n(k,t)\right]+\delta_{r,k}
+\end{multline}
+We can take the limit $t\to\infty$ and express \ref{MasterEquationEVM} with $p_\infty(k)$:
+\begin{multline} \label{MasterEquationEVMlimit}
+p_\infty(k)=\lim_{t\to\infty}N(t)\left[2(m-r)\Pi_2(k-1,t)+r\Pi_1(k-1,t)\right]p_\infty(k-1)\\
+-N(t)\left[2(m-r)\Pi_2(k,t)+r\Pi_1(k,t)\right]p_\infty(k)+\delta_{r,k}
+\end{multline}
+Note that since the vertices we're adding begin with degree $r$ rather than $m$, the lowest degree condition here states that $p(k<r,t)=0$.
+
+The equation \ref{MasterEquationEVMlimit} is difficult to solve, but we can make it easier by making an approximation: we can pretend for now that $k$ is a continuous variable, rather than a discrete one. We'll start by approximating the Kronecker delta as a Diract delta: $\delta_{r,k}\approx \delta(k-r)$. This means we can omit the Dirac delta term on the intervals $k\in (-\infty,r)$ and $k\in (r,\infty)$ respectively, and the total solution will be a piecewise combination of the solutions on these two intervals. Using the lowest degree condition, we immediately see that the solution for the first interval is $p_\infty(k<r)=0$. For $k>r$, we apply the specific shapes of $\Pi_1(k,t)=\Pi_{\mathrm{ra}}(k,t)=1/N(t),\Pi_2(k,t)=\Pi_{\mathrm{pa}}(k,t)=k/(2mN(t))$ and rearrange:
+\begin{align*}
+p_\infty(k)&=\left[\frac{m-r}{m}(k-1)+r\right]p_\infty(k-1)-\left[\frac{m-r}{m}k+r\right]p_\infty(k)\\
+p_\infty(k)&= -\frac{m-r}{m}\left[kp_\infty(k)-(k-1)p_\infty(k-1)\right]-r\left[p_\infty(k)-p_\infty(k-1)\right]\\
+p_\infty(k)&= -\frac{m-r}{m}\frac{kp_\infty(k)-(k-\Delta k)p_\infty(k-\Delta k)}{\Delta k}-r\frac{p_\infty(k)-p_\infty(k-\Delta k)}{\Delta k};\quad\Delta k=1
+\end{align*}
+We identify discrete approximations to differentials, which we can use since the function $p_\infty(k\in\mathbb{R})$ is just an extension of the well-behaved function $p_\infty(k\in\mathbb{N})$, so we can assume that the slope of $p_\infty(k)$ barely varies on an interval of width $\Delta k=1$. Hence we can write down the differential equation:
+\begin{equation} \label{MasterEquationEVMdiff}
+p_\infty(k)=-\frac{m-r}{m}\dv{k}\left[kp_\infty(k)\right]-r\dv{p_\infty(k)}{k}
+\end{equation}
+Using the product rule and rearranging:
+\begin{equation*}
+\frac{2m-r}{m}p_\infty(k)=-\left(\frac{m-r}{m}k+r\right)\dv{p_\infty(k)}{k}
+\end{equation*}
+This is a separable differential equation, so we solve it by integration:
+\begin{align*}
+\frac{\dd{p_\infty}}{p_\infty(k)}&=-\frac{2m-r}{(m-r)k+rm}\dd{k}\\
+\int^{p_\infty(k)}\frac{\dd{p_\infty'}}{p_\infty'(k)}&= -\frac{2m-r}{m-r}\int^k \frac{\dd{k'}}{k'+\frac{rm}{m-r}}\\
+\ln|p_\infty(k)|&= -\frac{2m-r}{m-r}\ln\left|k+\frac{rm}{m-r}\right|+c'\\
+p_\infty(k) &= c\left(k+\frac{rm}{m-r}\right)^{-\frac{2m-r}{m-r}}
+\end{align*}
+To find $c$, we could just normalize $p_\infty(k)$, but instead, we'll recognize $p_\infty(k)$ as the Green's function associated with \ref{MasterEquationEVMdiff} (since, on the full domain, we have the Dirac delta $\delta(k-r)$). The Green's condition here is
+$$p_\infty(r+\epsilon)-p_\infty(r-\epsilon)=\frac{1}{\frac{m-r}{m}k+r}\eval_{k=r}$$
+Applying the lowest degree condition and taking $\epsilon\to 0$:
+\begin{align*}
+\frac{m}{2mr-r^2}&=c\left(\frac{2mr-r^2}{m-r}\right)^{-\frac{2m-r}{m-r}}\\
+\frac{1}{c}&=\frac{m-r}{m}\left(\frac{2mr-r^2}{m-r}\right)^{-\frac{2m-r}{m-r}+1}\\
+c&=\frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}}
+\end{align*}
+We now check whether this is normalized:
+\begin{align*}
+\int_{-\infty}^\infty p_\infty(k)\dd{k}&= \int_{r}^\infty \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \left(k+\frac{rm}{m-r}\right)^{-\frac{2m-r}{m-r}} \dd{k}\\
+&= \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \left[-\frac{m-r}{m}\left(k+\frac{rm}{m-r}\right)^{-\frac{m}{m-r}}\right]_r^\infty\\
+&= \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \frac{m-r}{m}\left(r+\frac{rm}{m-r}\right)^{-\frac{m}{m-r}}\\
+&= 1
+\end{align*}
+We see that under the condition $r<m$ (so that the integral converges), $p_\infty(k)$ is a normalized probability density function.
 
 % ---------------------------------------------
 \subsection{Existing Vertices Model Numerical Results}

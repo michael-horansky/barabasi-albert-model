@@ -1003,8 +1003,8 @@ def task3_1_load(dataset_name):
 #task2_2("megakek", [2e3, 5e3, 1e4], N_m = 5)
 #task2_2_load("megakek", plot_measured_k_max = True)
 
-#task3_1("EVM_2", [6], [2], [2e5])
-#task3_1_load("EVM_testicek")
+task3_1("EVM_2", [6], [2], [2e5])
+#task3_1_load("EVM_1")
 
 #PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_COMBINED_first_second_third', 'fourth', 'N', PS = 'PA')
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
