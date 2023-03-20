@@ -994,7 +994,13 @@ def task3_1_load(dataset_name):
     PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_PA_' + dataset_name, keep_descriptors = True)
     k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
-task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
+def task3_2(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3, r=1, plot_measured_k_max = False):
+    
+    k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, r=r, PS = ['RA', 'PA'], bin_scale = 1.3)
+    k_max_analysis(['RA', 'PA'], N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = plot_measured_k_max)
+
+
+#task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
 #task1_4_expected_k_max()
 #task1_4('fourth', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
 #task1_4_load('COMBINED_COMBINED_first_second_third')
@@ -1005,6 +1011,7 @@ task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
 
 #task3_1("EVM_3", [9], [3], [2e5])
 #task3_1_load("EVM_1")
+task3_2("EVM_3_1_1e5", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
 
 #PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_COMBINED_first_second_third', 'fourth', 'N', PS = 'PA')
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
