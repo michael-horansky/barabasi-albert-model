@@ -994,13 +994,13 @@ def task3_1_load(dataset_name):
     PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = load_m_scaling_degree_distribution('RA_PA_' + dataset_name, keep_descriptors = True)
     k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
-#task1_3_load('1_3_5_big')
+task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
 #task1_4_expected_k_max()
 #task1_4('fourth', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
 #task1_4_load('COMBINED_COMBINED_first_second_third')
 
-#task2_1_load('testicek')
-task2_2("1e5_first", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 20)
+#task2_1('1_3_5_large', [1, 3, 5], N_max = [5e4, 1e5, 2e5])
+#task2_2("1e5_first", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 20)
 #task2_2_load("megakek", plot_measured_k_max = True)
 
 #task3_1("EVM_3", [9], [3], [2e5])
