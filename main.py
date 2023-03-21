@@ -618,9 +618,51 @@ def expected_bin_frequency_p_infty(m, r, k_min, k_max = -1, PS = 'PA'):
         return(np.power(power_base, k_min - m) - np.power(power_base, k_max - m))
     if PS == ['RA', 'PA']:
         
+        #if k_max == -1:
+        #    return( sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
+        #return( (sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) - sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_max)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
+        # the discrete solution:
+        return(discrete_expected_bin_frequency_EVM(m, r, k_min, k_max))
+        """A = m / (2.0 * m * r + m - r * r) * sp.special.gamma((2.0 * m * r + 3.0 * m - 2.0 * r - r * r)/(m - r)) / sp.special.gamma((2.0 * m * r + 2.0 * m - 2.0 * r - r * r)/(m - r))
+        if k_min == 1 and k_max == 2:
+            return(m / (2 * m * r + m - r * r))
+        elif k_min == 1:
+            return(m / (2 * m * r + m - r * r) + expected_bin_frequency_p_infty(m, r, k_min + 1, k_max, PS))
+        elif k_max == -1:
+            return()"""
+
+def discrete_expected_bin_frequency_EVM(m, r, k_min, k_max):
+    # this is the sus impostor function
+    if type(k_min) == list or type(k_min) == np.ndarray:
+        # iterable
+        res_array = []
         if k_max == -1:
-            return( sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
-        return( (sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_min) - sp.special.zeta((2.0 * m - r) / (m - r), r * m / (m - r) + k_max)) / sp.special.zeta((2.0 * m - r) / (m - r), r * (2.0 * m - r) / (m - r)) )
+            k_max_new = [-1] * len(k_min)
+        else:
+            k_max_new = k_max
+        for i in range(len(k_min)):
+            res_array.append(discrete_expected_bin_frequency_EVM(m, r, k_min[i], k_max_new[i]))
+        return(np.array(res_array))
+    if k_min == r:
+        return(m / (2.0 * m * r + m - r * r) + discrete_expected_bin_frequency_EVM(m, r, k_min+1, k_max))
+    z1 = m * r / (m - r)
+    z2 = z1 + (2.0 * m - r) / (m - r)
+    # prod 1
+    prod1 = 1.0
+    if k_min > r + 1:
+        for i in range(r+1, k_min):
+            prod1 *= (z1 + i) / (z2 + i)
+    # prod 2
+    if k_max == -1:
+        prod2 = 0.0
+    else:
+        prod2 = 1.0
+        for i in range(r+1, k_max):
+            prod2 *= (z1 + i) / (z2 + i)
+    factor = m * r / ((r + 1.0) * (2.0 * m * r + m - r * r))
+    return(factor * (prod1 * (1.0 + r + k_min - r * k_min / m) + prod2 * (r * (k_max-1.0) / m - k_max + r / m - r - 1.0)))
+    
+        
 def theoretical_binned_p_infty(bin_edges, m, r, PS = 'PA'):
     # This calculates the expected normalized AND unnormalized binned distribution of the gamma func. p_infty function
     # y[i] = (bin_edges[i+1] - bin_edges[i])^-1 * \int_{bin_edges[i]}^{bin_edges[i+1]} f(k) dk
@@ -653,11 +695,30 @@ def independent_sampling_expected_max_k(m, N, k_max = 1000000):
     print("Analysis done.                                                     ") #this is SUCH an ugly solution.
     return(res_sum)
 
-def expected_max_k(m, N, PS = 'PA'):
+def expected_max_k(m, r, N, PS = 'PA'):
     if PS == 'PA':
         return((-1.0 + np.sqrt(1 + 4.0 * N * m * (m + 1.0)))/2.0)
     if PS == 'RA':
         return(m + np.log(N) / np.log((m + 1.0) / m))
+    if PS == ['RA', 'PA']:
+        # this is a bit sussy
+        return(discrete_expected_max_k_EVM(m, r, N))
+
+def discrete_expected_max_k_EVM(m, r, N):
+    if type(N) == list or type(N) == np.ndarray:
+        # iterable
+        res_array = []
+        for i in range(len(N)):
+            res_array.append(discrete_expected_max_k_EVM(m, r, N[i]))
+        return(np.array(res_array))
+    # we basically do a search in a monotone function for a specific value
+    # TODO the following algorithm is terribly inefficient
+    cur_k_max = r+1
+    while(True):
+        cur_sum_prob = discrete_expected_bin_frequency_EVM(m, r, cur_k_max, -1)
+        if cur_sum_prob < 1.0 / N:
+            return(cur_k_max)
+        cur_k_max += 1
 
 # -----------------------------------------------------------
 #----------------- Data analysis functions ------------------
@@ -736,6 +797,15 @@ def k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max, res_array):
         #NOTE we now do the "cumulative infinity binning"
         y_counts_with_infinity, binedges_with_infinity, theoretical_binned_frequency_with_infinity = sanitize_fat_tail(y_counts, binedges, theoretical_binned_frequency, m_space[m_i], r_space[m_i], PS=PS)
         print("  sum of theoretical binned frequency INCLUDING INFINITY =", sum(theoretical_binned_frequency_with_infinity))
+        
+        
+        #loglog power fitting
+        x_nonzero = x[y_PDF!=0]
+        y_nonzero = y_PDF[y_PDF!=0]
+        fit_res_k, fit_std_k, fit_res_b, fit_std_b, fit_x_log_min, fit_x_log_max= loglog_fit(x_nonzero, y_nonzero)
+        print(f"Measured power law: p(k) goes like k^(-{-fit_res_k}+-{fit_std_k})")
+        print(f"(2m-r)/(m-r)={(2.0*m_space[m_i]-r_space[m_i])/(m_space[m_i]-r_space[m_i])}")
+        
         
         # BUT pearson is invalid for bins with counts smaller than 5, so we cannot include the infinity bin
         
@@ -828,7 +898,7 @@ def k_max_analysis(PS, N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_
         plt.loglog(fit_x_space, theoretical_gamma_p_infty(fit_x_space, m_val), linestyle='dotted', label=f'prediction ($N_{{max}} = 10^{{{np.round(np.log(N_space[N_i])/np.log(10))}}}$)', color=plt.gca().lines[-1].get_color())
     plt.legend()
     plt.show()"""
-    theoretical_k_max_avg = expected_max_k(m, np.array(N_space), PS)
+    theoretical_k_max_avg = expected_max_k(m, r, np.array(N_space), PS)
     if plot_measured_k_max:
         plt.title(f"$k_{{max}}$ as a function of the number of iterations (m = {m})")
         plt.xlabel("$N_{max}$")
@@ -923,7 +993,7 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
     
     for m_val in m_space_og:
         print("Analysing m =", m_val)
-        mean_k_max_space = expected_max_k(m_val, N_space, PS = 'PA')
+        mean_k_max_space = expected_max_k(m_val, m_val, N_space, PS = 'PA')
         plt.loglog(N_space, mean_k_max_space, 'x-', label=f'values ($m={m_val}$)')
         res_k, std_k, res_b, std_b, x_log_min, x_log_max = loglog_fit(N_space, mean_k_max_space)
         fitspace = np.linspace(x_log_min, x_log_max, 100)
@@ -940,7 +1010,7 @@ def task1_4_expected_k_max(m_space_og = [1, 3, 5], N_space_og = [1e2, 1e3, 1e4, 
         print("Analysing N =", N_val)
         mean_k_max_space = []
         for cur_m_val in m_space:
-            mean_k_max_space.append(expected_max_k(cur_m_val, N_val, PS = 'PA'))
+            mean_k_max_space.append(expected_max_k(cur_m_val, cur_m_val, N_val, PS = 'PA'))
         plt.loglog(m_space, mean_k_max_space, 'x-', label=f'values ($N={N_val}$)')
         res_k, std_k, res_b, std_b, x_log_min, x_log_max = loglog_fit(m_space, mean_k_max_space)
         fitspace = np.linspace(x_log_min, x_log_max, 100)
@@ -999,6 +1069,11 @@ def task3_2(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3, r=1, pl
     k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, r=r, PS = ['RA', 'PA'], bin_scale = 1.3)
     k_max_analysis(['RA', 'PA'], N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_array, plot_measured_k_max = plot_measured_k_max)
 
+def task3_2_load(dataset_name, plot_measured_k_max = False):
+    
+    PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('RA_PA_' + dataset_name, keep_descriptors = True)
+    k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
+
 
 #task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
 #task1_4_expected_k_max()
@@ -1011,7 +1086,8 @@ def task3_2(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3, r=1, pl
 
 #task3_1("EVM_3", [9], [3], [2e5])
 #task3_1_load("EVM_1")
-task3_2("EVM_3_1_1e5", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
+task3_2("EVM_3_1_1e5_second", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=10, m=3, r=1)
+#task3_2_load("EVM_3_1_1e5", True)
 
 #PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_COMBINED_first_second_third', 'fourth', 'N', PS = 'PA')
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
