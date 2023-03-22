@@ -275,24 +275,6 @@ Show statistically whether your numerical data fits your theoretical predictions
 \subsubsection{Largest Degree Theory}
 Give your best theoretical estimate of how the largest expected degree, $k_\mathrm{1}$ (subscript 1 indicating the degree of the vertex ranked first by degree size) depends on the number of vertices $N$ in a finite size system and on $m$ the number of edges added each step. \qmarks{4}
 
-The degree distribution of a large newtork with $N$ vertices will approximately follow the derived distribution in \ref{PAprob}, hence
-$$n_N(k)\approx Np_\infty(k)$$
-The largest degree $k_1$ is special in the sense that the expected amount of vertices with degree $k_1$ \textit{or higher} is $1$:
-\begin{equation} \label{MaximumDegree}
-N\sum_{k=k_1}^\infty p_\infty(k)=1
-\end{equation}
-We already know how to calculate this sum, so we evaluate:
-\begin{align*}
-N\sum_{k=k_1}^\infty &= 2Nm(m+1)\left[\frac{1}{2}\left(\frac{1}{k_1}+\frac{1}{k_1+1}\right)-\frac{1}{k_1+1}\right]\\
-&=Nm(m+1)\frac{1}{k_1(k_1+1)}\\
-k_1^2+k_1 &= Nm(m+1)\\
-k_1 &= \frac{-1\pm\sqrt{1+4Nm(m+1)}}{2}
-\end{align*}
-$k_1$ cannot be negative, hence we take the positive root:
-\begin{equation} \label{MaximumDegreePA}
-k_1 = \frac{-1+\sqrt{1+4Nm(m+1)}}{2}
-\end{equation}
-
 % ..............................................
 \subsubsection{Numerical Results for Largest Degree}
 Study of the behaviour of $k_1$ as $N$ is varied for one sensible fixed value of $m$ (justify your choice of parameters). Estimate uncertainties/errors where possible. Compare against your theoretical prediction. \qmarks{4}
@@ -301,13 +283,7 @@ Study of the behaviour of $k_1$ as $N$ is varied for one sensible fixed value of
 \subsubsection{Data Collapse}
 Illustrate the finite size effects by studying a single value of $m$ (justify your choice for $m$) but varying $N$ and looking for data collapse. You should describe how you tried to use an understanding of the $k_1$ scale to look for any finite size effects in the tail of the distribution, describing any results found. Further mathematical investigation of finite size effects is not required as it is extremely hard to do. \qmarks{4}
 
-The existence of $k_1(N)$ means that a network of size $N$ will experience a cut-off in its degree distribution around $k=k_1$. We use the following ansatz to describe this finite-size effect:
-\begin{equation} \label{FiniteSizeAnsatz}
-p_N(k)=p_\infty(k)\mathcal{F}\left(\frac{k}{k_1}\right)
-\end{equation}
-In our data collapse, we separate $\mathcal{F}$ like so:
-$$\mathcal{F}\left(\frac{k}{k_1}\right)=\frac{p_N(k)}{p_\infty(k)}=\frac{k(k+1)(k+2)}{A}p_N(k)$$
-and plot it against $k/k_1$ (so we divide the x-axis by $k_1$). $p_N(k)$ here represents the actual measured values for the distribution on a network of a specific size.
+
 
 
 % ***********************************************************************
@@ -358,15 +334,6 @@ Therefore $p_\infty(k)$ is normalized. We see that, rather than a power law like
 Give your best theoretical estimate of how the largest expected degree, $k_\mathrm{1}$ 
 %(subscript 1 indicating the degree of the vertex ranked first by degree size) 
 depends on the number of vertices $N$ in a finite size system. \qmarks{2}
-
-By substituing \ref{RAprob} into \ref{MaximumDegree} we obtain:
-\begin{align*}
-1 &= N\sum_{k=k_1}^\infty \frac{1}{m+1}\left(\frac{m}{m+1}\right)^{k-m}\\
-&= N\left(\frac{m}{m+1}\right)^{k_1-m}\sum_{k=m}^\infty \frac{1}{m+1}\left(\frac{m}{m+1}\right)^{k-m}\\
-&= N\left(\frac{m}{m+1}\right)^{k_1-m}\\
-N &= \left(\frac{m+1}{m}\right)^{k_1-m}\\
-k_1 &= m+\frac{\ln{N}}{\ln(\frac{m+1}{m})}
-\end{align*}
 
 % ---------------------------------------------
 \subsection{Random Attachment Numerical Results}
@@ -443,48 +410,43 @@ p_\infty(k)=\lim_{t\to\infty}N(t)\left[2(m-r)\Pi_2(k-1,t)+r\Pi_1(k-1,t)\right]p_
 \end{multline}
 Note that since the vertices we're adding begin with degree $r$ rather than $m$, the lowest degree condition here states that $p(k<r,t)=0$.
 
-We apply the specific shapes of $\Pi_1(k,t)=\Pi_{\mathrm{ra}}(k,t)=1/N(t),\Pi_2(k,t)=\Pi_{\mathrm{pa}}(k,t)=k/(2mN(t))$ and rearrange:
+The equation \ref{MasterEquationEVMlimit} is difficult to solve, but we can make it easier by making an approximation: we can pretend for now that $k$ is a continuous variable, rather than a discrete one. We'll start by approximating the Kronecker delta as a Diract delta: $\delta_{r,k}\approx \delta(k-r)$. This means we can omit the Dirac delta term on the intervals $k\in (-\infty,r)$ and $k\in (r,\infty)$ respectively, and the total solution will be a piecewise combination of the solutions on these two intervals. Using the lowest degree condition, we immediately see that the solution for the first interval is $p_\infty(k<r)=0$. For $k>r$, we apply the specific shapes of $\Pi_1(k,t)=\Pi_{\mathrm{ra}}(k,t)=1/N(t),\Pi_2(k,t)=\Pi_{\mathrm{pa}}(k,t)=k/(2mN(t))$ and rearrange:
 \begin{align*}
 p_\infty(k)&=\left[\frac{m-r}{m}(k-1)+r\right]p_\infty(k-1)-\left[\frac{m-r}{m}k+r\right]p_\infty(k)\\
-\left[1+r+\frac{m-r}{m}k\right]p_\infty(k)&= \left[r-\frac{m-r}{m}+\frac{m-r}{m}k\right]p_\infty(k-1)+\delta_{r,k}
+p_\infty(k)&= -\frac{m-r}{m}\left[kp_\infty(k)-(k-1)p_\infty(k-1)\right]-r\left[p_\infty(k)-p_\infty(k-1)\right]\\
+p_\infty(k)&= -\frac{m-r}{m}\frac{kp_\infty(k)-(k-\Delta k)p_\infty(k-\Delta k)}{\Delta k}-r\frac{p_\infty(k)-p_\infty(k-\Delta k)}{\Delta k};\quad\Delta k=1
 \end{align*}
-For $k=r$:
-\begin{equation*}
-p_\infty(r)=\frac{1}{1+r+\frac{m-r}{m}r}=\frac{m}{2mr+m-r^2}
-\end{equation*}
-For $k>r$:
-\begin{equation*}
-\frac{p_\infty(k)}{p_\infty(k-1)}=\frac{k+\frac{mr+r-m}{m-r}}{k+\frac{mr+m}{m-r}}
-\end{equation*}
-To solve this equation, we generalize our approach for the PA model and note that for a function $f(x)=A\Gamma(x+1+a)/\Gamma(x+1+b)$, we have
-$$\frac{f(x)}{f(x-1)}=\frac{\Gamma(x+1+a)\Gamma(x+b)}{\Gamma(x+a)\Gamma(x+1+b)}=\frac{(x+a)\Gamma(x+a)}{\Gamma(x+a)}\frac{\Gamma(x+b)}{(x+b)\Gamma(x+b)}=\frac{x+a}{x+b}$$
-Identifying $x\equiv k, a\equiv \frac{mr+r-m}{m-r}, b\equiv \frac{mr+m}{m-r}$ we obtain
-\begin{equation*}
-p_\infty(k>r)=A\frac{\Gamma(k+1+\frac{mr+r-m}{m-r})}{\Gamma(k+1+\frac{mr+m}{m-r})}=A\frac{\Gamma(k+z_1)}{\Gamma(k+z_2)}\mbox{ where }z_1=\frac{mr}{m-r},z_2=\frac{mr+2m-r}{m-r}
-\end{equation*}
-Now:
-\begin{align*}
-\frac{p_\infty(r+1)}{p_\infty(r)}&= \frac{(m-r)(r+1)+mr-m+r}{(m-r)(r+1)+mr+m} = A\frac{\Gamma(r+1+z_1)}{\Gamma(r+1+z_2)}\frac{2mr+m-r^2}{m}\\
-A&= \frac{mr}{(r+1)(2mr+m-r^2)}\frac{\Gamma(r+1+z_2)}{\Gamma(r+1+z_1)}
-\end{align*}
-We can check whether this is normalized: we want all the probabilities to sum up to $1$. By induction, we can find the partial sum:
-\begin{multline} \label{RAPApartial}
-\sum_{k=k_{\mathrm{min}}>r}^{k_{\mathrm{max}}}p_\infty(k)=A\left[\frac{\Gamma(z_1+k_{\mathrm{min}})}{\Gamma(z_2+k_{\mathrm{min}})}\left(1+r+k_{\mathrm{min}}\left(1-\frac{r}{m}\right)\right)+\right.\\
-\left.\frac{\Gamma(z_1+1+k_{\mathrm{max}})}{\Gamma(z_2+1+k_{\mathrm{max}})}\left(\frac{r}{m}-r-2+k_{\mathrm{max}}\left(\frac{r}{m}-1\right)\right)\right]
-\end{multline}
-The gamma fraction in the second term goes like $(k_{\mathrm{max}}+1)^{z_1-z_2}=(k_{\mathrm{max}}+1)^{-\frac{2m-r}{m-r}}$, so the sum converges if $-\frac{2m-r}{m-r}<-1\Leftrightarrow m>0,m>r$, which we can automatically assume to be satisfied. Hence:
-\begin{align*}
-\sum_{k=r}^\infty p_\infty(k) &= \frac{m}{2mr+m-r^2} + A\frac{\Gamma(z_1+r+1)}{\Gamma(z_2+r+1)}\frac{(r+1)(2m-r)}{m}\\
-&= \frac{m}{2mr+m-r^2} + \frac{(2m-r)r}{2mr+m-r^2} = 1
-\end{align*}
-So $p_\infty(k)$ is normalized and looks like so:
-\begin{equation} \label{RAPAprob}
-p_\infty(k) = \begin{cases}
-\frac{m}{2mr+m-r^2} & k=r\\
-\frac{mr}{(r+1)(2mr+m-r^2)}\frac{\Gamma(r+1+z_2)}{\Gamma(r+1+z_1)}\frac{\Gamma(k+z_1)}{\Gamma(k+z_2)} & k>r\\
-0 & \mathrm{otherwise}
-\end{cases}
+We identify discrete approximations to differentials, which we can use since the function $p_\infty(k\in\mathbb{R})$ is just an extension of the well-behaved function $p_\infty(k\in\mathbb{N})$, so we can assume that the slope of $p_\infty(k)$ barely varies on an interval of width $\Delta k=1$. Hence we can write down the differential equation:
+\begin{equation} \label{MasterEquationEVMdiff}
+p_\infty(k)=-\frac{m-r}{m}\dv{k}\left[kp_\infty(k)\right]-r\dv{p_\infty(k)}{k}
 \end{equation}
+Using the product rule and rearranging:
+\begin{equation*}
+\frac{2m-r}{m}p_\infty(k)=-\left(\frac{m-r}{m}k+r\right)\dv{p_\infty(k)}{k}
+\end{equation*}
+This is a separable differential equation, so we solve it by integration:
+\begin{align*}
+\frac{\dd{p_\infty}}{p_\infty(k)}&=-\frac{2m-r}{(m-r)k+rm}\dd{k}\\
+\int^{p_\infty(k)}\frac{\dd{p_\infty'}}{p_\infty'(k)}&= -\frac{2m-r}{m-r}\int^k \frac{\dd{k'}}{k'+\frac{rm}{m-r}}\\
+\ln|p_\infty(k)|&= -\frac{2m-r}{m-r}\ln\left|k+\frac{rm}{m-r}\right|+c'\\
+p_\infty(k) &= c\left(k+\frac{rm}{m-r}\right)^{-\frac{2m-r}{m-r}}
+\end{align*}
+To find $c$, we could just normalize $p_\infty(k)$, but instead, we'll recognize $p_\infty(k)$ as the Green's function associated with \ref{MasterEquationEVMdiff} (since, on the full domain, we have the Dirac delta $\delta(k-r)$). The Green's condition here is
+$$p_\infty(r+\epsilon)-p_\infty(r-\epsilon)=\frac{1}{\frac{m-r}{m}k+r}\eval_{k=r}$$
+Applying the lowest degree condition and taking $\epsilon\to 0$:
+\begin{align*}
+\frac{m}{2mr-r^2}&=c\left(\frac{2mr-r^2}{m-r}\right)^{-\frac{2m-r}{m-r}}\\
+\frac{1}{c}&=\frac{m-r}{m}\left(\frac{2mr-r^2}{m-r}\right)^{-\frac{2m-r}{m-r}+1}\\
+c&=\frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}}
+\end{align*}
+We now check whether this is normalized:
+\begin{align*}
+\int_{-\infty}^\infty p_\infty(k)\dd{k}&= \int_{r}^\infty \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \left(k+\frac{rm}{m-r}\right)^{-\frac{2m-r}{m-r}} \dd{k}\\
+&= \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \left[-\frac{m-r}{m}\left(k+\frac{rm}{m-r}\right)^{-\frac{m}{m-r}}\right]_r^\infty\\
+&= \frac{m}{m-r}\left(\frac{2m-r}{m-r}r\right)^{\frac{m}{m-r}} \frac{m-r}{m}\left(r+\frac{rm}{m-r}\right)^{-\frac{m}{m-r}}\\
+&= 1
+\end{align*}
+We see that under the condition $r<m$ (so that the integral converges), $p_\infty(k)$ is a normalized probability density function.
 
 % ---------------------------------------------
 \subsection{Existing Vertices Model Numerical Results}

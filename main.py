@@ -565,7 +565,7 @@ def combine_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
         
         N_m3 = N_m1 + N_m2
         m3 = m1
-        r3 = m1
+        r3 = r1
         bin_scale3 = bin_scale1
         N_max_space3 = N_max_space1
         k_max_avg_array3, k_max_std_array3 = weighted_mean(k_max_avg_array1, k_max_std_array1, k_max_avg_array2, k_max_std_array2, N_m1, N_m2)
@@ -1025,10 +1025,10 @@ def task1_4(new_dataset_name, N_space = [5e4, 1e5, 2e5], N_m = 1, m = 3):
     k_max_avg_array, k_max_std_array,res_array = N_scaling_degree_distribution(new_dataset_name, N_space, N_m=N_m, m=m, PS = 'PA', bin_scale = 1.3)
     k_max_analysis('PA', N_m, N_space, m, m, k_max_avg_array, k_max_std_array,res_array)
 
-def task1_4_load(dataset_name):
+def task1_4_load(dataset_name, plot_measured_k_max = False):
     
     PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = load_N_scaling_degree_distribution('PA_' + dataset_name, keep_descriptors = True)
-    k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
+    k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
 
 def task2_1(new_dataset_name, m_space = [1, 3, 5], N_max = [5e3, 1e4, 2e4], N_m = 1):
     
@@ -1082,14 +1082,14 @@ def task3_2_load(dataset_name, plot_measured_k_max = False):
 
 #task2_1('1_3_5_large', [1, 3, 5], N_max = [5e4, 1e5, 2e5])
 #task2_2("1e5_first", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 20)
-#task2_2_load("megakek", plot_measured_k_max = True)
+#task2_2_load("1e5_first", plot_measured_k_max = True)
 
 #task3_1("EVM_3", [9], [3], [2e5])
 #task3_1_load("EVM_1")
-task3_2("EVM_3_1_1e5_second", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=10, m=3, r=1)
+task3_2("EVM_3_1_1e5_third", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
 #task3_2_load("EVM_3_1_1e5", True)
 
-#PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_COMBINED_first_second_third', 'fourth', 'N', PS = 'PA')
+#PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('EVM_3_1_1e5', 'EVM_3_1_1e5_second', 'N', PS = ['RA','PA'])
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
 
 
