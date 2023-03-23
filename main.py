@@ -720,6 +720,9 @@ def discrete_expected_max_k_EVM(m, r, N):
             return(cur_k_max)
         cur_k_max += 1
 
+def approximate_expected_max_k_EVM(m, r, N):
+    return((np.power(N, (m-r)/m) * r * (2 * m - r) - r * m) / (m - r))
+
 # -----------------------------------------------------------
 #----------------- Data analysis functions ------------------
 # -----------------------------------------------------------
@@ -899,6 +902,8 @@ def k_max_analysis(PS, N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_
     plt.legend()
     plt.show()"""
     theoretical_k_max_avg = expected_max_k(m, r, np.array(N_space), PS)
+    if PS == ['RA', 'PA']:
+        approx_theoretical_k_max_avg = approximate_expected_max_k_EVM(m, r, np.array(N_space))
     if plot_measured_k_max:
         plt.title(f"$k_{{max}}$ as a function of the number of iterations (m = {m})")
         plt.xlabel("$N_{max}$")
@@ -909,7 +914,8 @@ def k_max_analysis(PS, N_m, N_space, m, r, k_max_avg_array, k_max_std_array,res_
             plt.plot(N_space, k_max_avg_array, linestyle='x-', label='values')
         
         plt.plot(N_space, theoretical_k_max_avg, linestyle='dashed', label=f'prediction')
-        
+        if PS == ['RA', 'PA']:
+            plt.plot(N_space, approx_theoretical_k_max_avg, linestyle='dashed', label=f'prediction (approx)')
         plt.legend()
         plt.show()
     
@@ -1086,8 +1092,8 @@ def task3_2_load(dataset_name, plot_measured_k_max = False):
 
 #task3_1("EVM_3", [9], [3], [2e5])
 #task3_1_load("EVM_1")
-task3_2("EVM_3_1_1e5_third", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
-#task3_2_load("EVM_3_1_1e5", True)
+#task3_2("EVM_3_1_1e5_third", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
+task3_2_load("EVM_3_1_1e5", True)
 
 #PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('EVM_3_1_1e5', 'EVM_3_1_1e5_second', 'N', PS = ['RA','PA'])
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)

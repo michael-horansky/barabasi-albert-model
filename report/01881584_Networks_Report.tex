@@ -486,6 +486,17 @@ p_\infty(k) = \begin{cases}
 \end{cases}
 \end{equation}
 
+\textbf{Maximum Degree}
+
+To find $k_1$, we cannot solve \ref{MaximumDegree} directly, but by approximating \ref{MasterEquationEVMlimit} for countinuous $k$, expressing it as a differential equation and interpreting the Kronecker delta as a Dirac delta, so that we can apply the Green's function condition, we can approximate $p_\infty(k)$ as
+\begin{equation*}
+p_\infty(k)\approx \frac{m}{m-r}\left(r\frac{2m-r}{m-r}\right)^{\frac{m}{m-r}}\left(k+\frac{rm}{m-r}\right)^{-\frac{2m-r}{m-r}}
+\end{equation*}
+which we can put into \ref{MaximumDegree} and obtain
+\begin{equation} \label{MaximumDegreeEVM}
+k_1\approx \frac{(2m-r)rN^{\frac{m-r}{m}}-rm}{m-r}
+\end{equation}
+
 % ---------------------------------------------
 \subsection{Existing Vertices Model Numerical Results}
 
