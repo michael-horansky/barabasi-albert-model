@@ -538,8 +538,8 @@ def combine_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
         ds_out = "COMBINED_" + ds1 + "_" + ds2
     
     if which_scaling.lower() == 'm':
-        PS1, N_m1, bin_scale1, m_space1, r_space1, N_max_space1, res_array1 = load_m_scaling_degree_distribution(PS + "_" + ds1, keep_descriptors = True)
-        PS2, N_m2, bin_scale2, m_space2, r_space2, N_max_space2, res_array2 = load_m_scaling_degree_distribution(PS + "_" + ds2, keep_descriptors = True)
+        PS1, N_m1, bin_scale1, m_space1, r_space1, N_max_space1, res_array1 = load_m_scaling_degree_distribution(encode_PS(PS) + "_" + ds1, keep_descriptors = True)
+        PS2, N_m2, bin_scale2, m_space2, r_space2, N_max_space2, res_array2 = load_m_scaling_degree_distribution(encode_PS(PS) + "_" + ds2, keep_descriptors = True)
         
         if bin_scale1 != bin_scale2 or m_space1 != m_space2 or r_space1 != r_space2 or N_max_space1 != N_max_space2:
             print(f"ERROR: Datasets '{ds1}' and '{ds2}' found incompatible!")
@@ -574,6 +574,63 @@ def combine_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
         save_N_scaling_degree_distribution(ds_out, PS, N_m3, m3, r3, bin_scale3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
         return(PS, N_m3, bin_scale3, m3, r3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
         
+
+def concatenate_datasets(ds1, ds2, which_scaling, ds_out = -1, PS = 'PA'):
+    # If ds1 and ds2 are compatible datasets, this creates a concatenated dataset and saves it into ds_out
+    # which_scaling determines whether this is m_k_scaling ('m') or N_k_scaling ('N')
+    if ds_out == -1:
+        ds_out = "CONCATENATED_" + ds1 + "_" + ds2
+    if which_scaling.lower() == 'm':
+        PS1, N_m1, bin_scale1, m_space1, r_space1, N_max_space1, res_array1 = load_m_scaling_degree_distribution(encode_PS(PS) + "_" + ds1, keep_descriptors = True)
+        PS2, N_m2, bin_scale2, m_space2, r_space2, N_max_space2, res_array2 = load_m_scaling_degree_distribution(encode_PS(PS) + "_" + ds2, keep_descriptors = True)
+        
+        if bin_scale1 != bin_scale2 or PS1 != PS2 or N_m1 != N_m2:
+            print(f"ERROR: Datasets '{ds1}' and '{ds2}' found incompatible!")
+            return(-1)
+        N_m3 = N_m1
+        bin_scale3 = bin_scale1
+        m_space3 = np.concatenate((m_space1, m_space2))
+        r_space3 = np.concatenate((r_space1, r_space2))
+        N_max_space3 = np.concatenate((N_max_space1, N_max_space2))
+        res_array3 = np.concatenate((res_array1, res_array2))
+        
+        save_m_scaling_degree_distribution(ds_out, PS, N_m3, bin_scale3, m_space3, r_space3, N_max_space3, res_array3)
+        return(PS, N_m3, bin_scale3, m_space3, r_space3, N_max_space3, res_array3)
+        
+    
+    if which_scaling.lower() == 'n':
+        """
+        The file has the form:
+            1 [PS, N_m, m, r, bin_scale]
+            2 [N_max1, N_max2, N_max3...]
+            3 [k_max1, k_max2, k_max3...]
+            4 [k_max_std1, k_max_std2, k_max_std3...]
+            Then for each m_val, there are 6 rows:
+                1 [x]
+                2 [y_PDF]
+                3 [y_PDF_std]
+                4 [y_counts]
+                5 [y_counts_std]
+                5 [binedges]
+        """
+        PS1, N_m1, bin_scale1, m1, r1, N_max_space1, k_max_avg_array1, k_max_std_array1, res_array1 = load_N_scaling_degree_distribution(encode_PS(PS) + "_" + ds1, keep_descriptors = True)
+        PS2, N_m2, bin_scale2, m2, r2, N_max_space2, k_max_avg_array2, k_max_std_array2, res_array2 = load_N_scaling_degree_distribution(encode_PS(PS) + "_" + ds2, keep_descriptors = True)
+        
+        if bin_scale1 != bin_scale2 or PS1 != PS2 or N_m1 != N_m2 or m1 != m2 or r1 != r2:
+            print(f"ERROR: Datasets '{ds1}' and '{ds2}' found incompatible!")
+            return(-1)
+        N_m3 = N_m1
+        m3 = m1
+        r3 = r1
+        bin_scale3 = bin_scale1
+        N_max_space3 = np.concatenate((N_max_space1, N_max_space2))
+        k_max_avg_array3 = np.concatenate((k_max_avg_array1, k_max_avg_array2))
+        k_max_std_array3 = np.concatenate((k_max_std_array1, k_max_std_array2))
+        res_array3 = np.concatenate((res_array1, res_array2))
+        
+        save_N_scaling_degree_distribution(ds_out, PS, N_m3, m3, r3, bin_scale3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
+        return(PS, N_m3, bin_scale3, m3, r3, N_max_space3, k_max_avg_array3, k_max_std_array3, res_array3)
+
 
 # -----------------------------------------------------------
 # ----------- Theoretical prediction functions --------------
@@ -807,7 +864,8 @@ def k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max, res_array):
         y_nonzero = y_PDF[y_PDF!=0]
         fit_res_k, fit_std_k, fit_res_b, fit_std_b, fit_x_log_min, fit_x_log_max= loglog_fit(x_nonzero, y_nonzero)
         print(f"Measured power law: p(k) goes like k^(-{-fit_res_k}+-{fit_std_k})")
-        print(f"(2m-r)/(m-r)={(2.0*m_space[m_i]-r_space[m_i])/(m_space[m_i]-r_space[m_i])}")
+        if PS == ['RA', 'PA']:
+            print(f"(2m-r)/(m-r)={(2.0*m_space[m_i]-r_space[m_i])/(m_space[m_i]-r_space[m_i])}")
         
         
         # BUT pearson is invalid for bins with counts smaller than 5, so we cannot include the infinity bin
@@ -854,13 +912,13 @@ def k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max, res_array):
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
         else:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
-        plt.loglog(x, theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+        plt.loglog(x, theoretical_binned_distribution_list[m_i], linestyle='dotted', label=f'theory ($m = {m_space[m_i]}$)')
     
     plt.legend()
     plt.subplot(2, 1, 2)
     plt.title("Bin count of node degree")
     
-    plt.xlabel("k")
+    plt.xlabel("$k$")
     plt.ylabel("$N_k$(bin)")
     
     for m_i in range(len(m_space)):
@@ -880,7 +938,7 @@ def k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max, res_array):
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], yerr = yerr_nonzero, fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
         else:
             plt.errorbar(x_nonzero, y_nonzero, xerr=[xerr_left_nonzero, xerr_right_nonzero], fmt='x', capsize=10, label=f'data ($m = {m_space[m_i]}$)')
-        plt.loglog(x, theoretical_binned_frequency_list[m_i] * N_max[m_i], linestyle='dotted', label=f'prediction ($m = {m_space[m_i]}$)')
+        plt.loglog(x, theoretical_binned_frequency_list[m_i] * N_max[m_i], linestyle='dotted', label=f'theory ($m = {m_space[m_i]}$)')
     
     plt.legend()
     plt.tight_layout()
@@ -1081,23 +1139,26 @@ def task3_2_load(dataset_name, plot_measured_k_max = False):
     k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array, plot_measured_k_max = plot_measured_k_max)
 
 
-#task1_3('1_3_MEGABIG', [1, 3], N_max = [2e5, 4e5])
+#task1_3('3_AGAIN_fixed_N', [3], N_max = [2e5])
+task1_3_load("1_3_5_fixed_N")
 #task1_4_expected_k_max()
 #task1_4('fourth', [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 5)
-#task1_4_load('COMBINED_COMBINED_first_second_third')
+#task1_4_load('COMBINED_COMBINED_first_second_third', plot_measured_k_max = True)
 
-#task2_1('1_3_5_large', [1, 3, 5], N_max = [5e4, 1e5, 2e5])
+#task2_1('1_3_fixed_N', [1, 3], N_max = [2e5, 2e5])
 #task2_2("1e5_first", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m = 20)
 #task2_2_load("1e5_first", plot_measured_k_max = True)
 
 #task3_1("EVM_3", [9], [3], [2e5])
-#task3_1_load("EVM_1")
+#task3_1_load("EVM_2")
 #task3_2("EVM_3_1_1e5_third", [1e3, 2e3, 5e3, 1e4, 2e4, 5e4, 1e5], N_m=5, m=3, r=1)
-task3_2_load("EVM_3_1_1e5", True)
+#task3_2_load("EVM_3_1_1e5", True)
 
-#PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('EVM_3_1_1e5', 'EVM_3_1_1e5_second', 'N', PS = ['RA','PA'])
+#PS, N_m, bin_scale, m, r, N_max_space, k_max_avg_array, k_max_std_array, res_array = combine_datasets('COMBINED_EVM_3_1_1e5_EVM_3_1_1e5_second', 'EVM_3_1_1e5_third', 'N', PS = ['RA','PA'])
 #k_max_analysis(PS, N_m, N_max_space, m, r, k_max_avg_array, k_max_std_array, res_array)
 
+#PS, N_m, bin_scale, m_space, r_space, N_max_space, res_array = concatenate_datasets('1_3_fixed_N', '5_big', 'm', PS = 'PA')
+#k_degree_distribution_analysis(PS, N_m, m_space, r_space, N_max_space, res_array)
 
 #EVM_jebak = BA_network(m = 3, probability_strategy = ['RA','PA'], r = 1)
 #EVM_jebak.initial_graph('regular', N=10, param = EVM_jebak.m)

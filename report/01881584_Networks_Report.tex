@@ -151,16 +151,21 @@ Give your definition of the BA model as implemented by you in this work. \qmarks
 \subsubsection{Numerical Implementation}
 Describe how you implemented the BA model numerically. \qmarks{3} %(2010 3 marks?)
 
+I wrote a python class that represents a single network. It stores the adjacency list (since the network will be sparse) and an array of \textit{unnormalized probabilities}, aka weights, one entry for each vertex. First, the model initializes a network drawing from a variety of methods (even though I consistently started with random regular networks), and then simulates a number of steps. In each step, $m$ vertices are picked at random, with the selection probability being proportional to their weights, and then a vertex and $m$ edges are added to the adjacency list, updating the weights according to the specific probability strategy PS (here preferential attachement).
+
+The random selection is done without replacement, so each pair of vertices can be connected by up to one edge. The random regular network generator \textit{de facto} keeps randomly picking from available edges until either the process is done or there is a dead end, which prompts a retry, so even though it's horrifically ineffectove, it's entirely random.
 
 % ..............................................
 \subsubsection{Initial Graph}
 What type of initial graph do you use and why? \qmarks{3}
 
-Tdddd therefore for our system, $p(k<m,t)=n(k<m,t)=0$ (the \textit{lowest degree condition}).
+I use a random regular graph with $k_i=m$, so that $p(k<m,t)=n(k<m,t)=0\forall t$ (the \textit{lowest degree condition}). Starting with a `shapeless' $k$ distribution also prevents potential initial-value conditions altering the measurements -- for example, if we started with a graph where all $k=1$ except for $k_1=1000$, then that one vertex would be getting almost all of the new edges, highly increasing the network size $N$ required for the $k$ distribution to converge to a power law distribution.
 
 % ..............................................
 \subsubsection{Type of Graph}
 What type of graph do you produce and why? \qmarks{3}
+
+We end up with a simple, sparse network. \textbf{Simple}, because our rules don't allow self-loops or multiple edges connecting two vertices, and \textbf{sparse}, because $N(t)$ and $E(t)$ are of the same order (see proof below).
 
 % ..............................................
 \subsubsection{Working Code}
@@ -171,7 +176,7 @@ How do you know that your programme is working correctly? \qmarks{2}
 \subsubsection{Parameters}
 Describe the parameters your programme needs, the values you chose, and why. \qmarks{2}
 
-
+The network itself needs to know its probability strategy (in this section always preferential attachement `PA'), the value of $m$, the size of the initial graph $N_0$ and the size of the final graph $N_{\mathrm{final}}$. I chose $m=1, 3, 5$, since the time complexity is proportional to $m$ and, in our theoretical distribution, $m$ is just a factor and therefore not too interesting. $N_0$ I always set to $2(m+1)$ so that the regular graph is possible to create, and so that the initial size is relatively (to $N_{\mathrm{final}}$) small. I chose $N_{\mathrm{final}} = 2\cdot 10^5$, because I checked that for that size the goodness-of-fit numbers barely fluctuate for my chosen values of $m$, so we can assume they've reached their limit here.
 
 % ---------------------------------------------
 \subsection{Preferential Attachment Degree Distribution Theory}
@@ -256,15 +261,29 @@ We recognize that the series on the right side is telescoping, hence we have
 \subsubsection{Fat-Tail}
 How did you deal with any problems that a fat-tailed distribution causes? \qmarks{4}
 
+The fat-tailed distribution of $k$ means there will be many zero-valued entries for large $k$ that are still smaller than $k_1$. Also, since we're dealing with huge networks ($N\sim 10^5$), equally-sized bins that wouldn't lose details for small $k$ would mean we would have a large number of categories (bins). Both of these problems can be solved by log-binning: the width of each bin is equal to the width of the previous bin multiplied by some constant (which I set to $1.3$, but the statistical values don't vary by much when this value is tweaked slightly). For my goodness-of-fit tests etc, I therefore reduced the distribution dataset to a log-binned histogram.
+
 % ..............................................
 \subsubsection{Numerical Results}
 Show how you compared your theoretical result to your numerical data for fixed $N$ but different $m$.
 Give a visualisation which shows you whether you have a good or bad fit of your numerical data to your theoretical results.
 \qmarks{4}
 
+I ran the simulation for $N=2\cdot 10^5$ and $m=1, 3, 5$. I plotted the approximate probability density distribution and the bin counts, both agreeing with the theoretical prediction.
+
+\begin{figure}[htb]
+  \begin{center}
+      \includegraphics[width=0.7\textwidth]{images/task1_3.pdf}
+  \end{center}
+      \caption{Degree distribution for preferential attachement. The top plot shows the probability density distribution of $k$ approximated from the measured data by dividing the bin counts by the bin widths and then normalizing by the factor of $N^{-1}$. The bottom plot shows the raw bin counts, on which the goodness-of-fit test is done (after tail compression). We see that since all distributions resemble straight lines on a log-log plot, they are power laws.}
+      \label{fig_task_1_3} %always put the label command after the caption for a figure or table.
+\end{figure} 
+
 % ..............................................
 \subsubsection{Statistics}
 Show statistically whether your numerical data fits your theoretical predictions. \qmarks{6}
+
+Since I deal with binned data, I make a theoretical prediction of the count in each bin (as a partial sum of $p_\infty(k)$) and compare that to the measured values. Since I deal with categorical data, I used $\chi^2$ testing, which calculates the $\chi^2$ statistic of a dataset, which represents the `distance' of the data form the theoretical prediction, and then calculates the probability $p$ that a dataset with such $\chi^2$ statistic or higher would be measured \textit{given} the data follows the theoretical prediction. Here, $H_0$ is that the data does follow the prediction, and a large $p$ (usually taken as larger than $0.05$) means we failed to reject $H_0$, which is evidence that the fit is good.
 
 
 % ---------------------------------------------
@@ -561,8 +580,6 @@ Optional. Not required but you might want to thank A.Demonstrator or A.Friend fo
   K.Christensen and N.Maloney,
   \emph{Complexity and Criticality},
   Imperial College Press, London, 2005.
-\bibitem{E23} 
-T.S.\ Evans, \emph{Astounding Paper}, Journal of Amazing Results, \textbf{9} (2023) 3134.
 \end{thebibliography}
 
 

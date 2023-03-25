@@ -291,13 +291,6 @@ class BA_network():
             degree_array.append(len(item))
         
         return(degree_array)
-        """if uniform_bins:
-            smallest_degree = min(degree_array)
-            largest_degree = max(degree_array)
-            bin_edges = np.arange(smallest_degree, largest_degree + 1, uniform_bin_width) - 0.5
-            return(np.histogram(degree_array, bins = bin_edges))
-        #else do logbinning
-        return(logbin(degree_array))"""
     
     # ---------------- M TEST WRAPPER METHODS ---------------
     
